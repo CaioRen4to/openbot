@@ -11,6 +11,7 @@
     "./logo.css": "./src/logo.css",
     "./tokens.css": "./src/tokens.css",
     "./tokens-light.css": "./src/tokens-light.css",
+    "./tokens-jarvis.css": "./src/tokens-jarvis.css",
     "./tokens-native.css": "./src/tokens-native.css",
     "./article-gradient": "./src/article-gradient.ts",
     "./file-reference": "./src/file-reference.ts",

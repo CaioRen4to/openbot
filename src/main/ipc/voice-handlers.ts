@@ -4,6 +4,7 @@
 
 import type {
   DraftAttachment,
+  JarvisShortcutSettings,
   SpeechAudio,
   SpeechModelStatus,
   SpeechSettings,
@@ -26,6 +27,7 @@ import { sourceText } from "@openbot/i18n/source";
 import type { WebContents } from "electron";
 import type { AgentService } from "../../backend/agent-service";
 import { runCauseEffect } from "../../backend/effect-boundary";
+import type { JarvisShortcutService } from "../jarvis-shortcut-service";
 import { acceptEmpty } from "../remote-host-decoding";
 import type { RemoteServerManager } from "../remote-server-manager";
 import { voiceLiveEventFromWire } from "../team-api/route-live-voice";
@@ -36,6 +38,7 @@ import { agentRequest } from "./agent-inputs";
 import { eventPayloadHandler, handler, type IpcGroupHandlers, payloadHandler } from "./define-ipc-group";
 import { routeToServer } from "./route-to-server";
 import {
+  parseJarvisShortcutSettings,
   parseSpeechApiKey,
   parseSpeechInput,
   parseSpeechSettings,
@@ -63,6 +66,7 @@ export interface VoiceIpcDependencies {
   remoteServers: Pick<RemoteServerManager, "request" | "supportsCapability" | "on">;
   /** Sends a live voice event of a joined server to the windows. */
   forwardLiveEvent(event: VoiceLiveEvent): void;
+  jarvisShortcut: JarvisShortcutService;
 }
 
 /** A start can wait for the host to start Codex, and then up to 20 seconds for the answer of OpenAI. */
@@ -75,6 +79,7 @@ export function voiceIpcHandlers({
   service,
   remoteServers,
   forwardLiveEvent,
+  jarvisShortcut,
 }: VoiceIpcDependencies): Pick<IpcGroupHandlers, "voice"> {
   // A window that closes, reloads or crashes cannot stop its live voice any more, so main stops it.
   const liveSessions = new WeakMap<WebContents, Set<string>>();
@@ -258,6 +263,11 @@ export function voiceIpcHandlers({
         liveSessions.get(sender)?.delete(sessionId);
         return stopLive(sessionId);
       }),
+      getMaestroShortcut: handler((): JarvisShortcutSettings => jarvisShortcut.getSettings()),
+      setMaestroShortcut: payloadHandler(
+        parseJarvisShortcutSettings,
+        (settings): Promise<JarvisShortcutSettings> => jarvisShortcut.setSettings(settings),
+      ),
     },
   };
 }

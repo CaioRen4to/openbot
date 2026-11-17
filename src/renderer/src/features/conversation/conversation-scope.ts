@@ -9,6 +9,7 @@ import { isNarrationItemId } from "@openbot/contracts/conversation-narration";
 import {
   customProviderOfModel,
   isCustomProviderHarness,
+  LOCAL_SERVER_ID,
   type McpSignInRelayPage,
   relayableSignInLink,
   type UpdateAgentInput,
@@ -36,10 +37,13 @@ import { actionToast } from "../../action-toast";
 import { holdNativeBrowserPage } from "../../native-browser-page";
 import { createScopeGuard } from "../../scope-lifetime";
 import { appendVoiceTranscript } from "../../voice-recording";
+import { clearJarvisVoiceCommand, jarvisVoiceRequest } from "../jarvis/jarvis-maestro-store";
 import { serverSupportsCapability } from "../servers/server-capabilities";
 import { codexLiveAccess } from "../speech/codex-live-access";
+import { noteDictatedMessage } from "../speech/speech-replies";
 import { createAttachmentImportSounds } from "./attachment-import-sounds";
 import type { ChatSearchMatch } from "./chat-search";
+import { EMPTY_DRAFT } from "./composer-draft";
 import { useConversationController } from "./conversation-controller-context";
 import { agentConversationKey, composerDraftKey } from "./conversation-keys";
 import { conversationPort } from "./conversation-port";
@@ -2613,6 +2617,49 @@ export function createConversationViewScope(props: ConversationProps) {
       serverOnline: () => props.server?.kind !== "remote" || props.server.state === "online",
       progressUpdate: (message) => isNarrationItemId(message.id, props.agent?.provider),
     });
+
+  createEffect(
+    () => ({
+      request: jarvisVoiceRequest(),
+      agentId: props.agent?.id,
+    }),
+    ({ request, agentId }) => {
+      if (!request || !agentId || request.agentId !== agentId) return;
+      clearJarvisVoiceCommand(request.id);
+      if (request.mode === "send-prompt") {
+        const promptText = request.promptText?.trim();
+        if (promptText) {
+          const target: ConversationTarget = {
+            agentId,
+            serverId: props.server?.id ?? LOCAL_SERVER_ID,
+          };
+          noteDictatedMessage(target, promptText, {
+            always: true,
+            progressUpdate: (message) => isNarrationItemId(message.id, props.agent?.provider),
+          });
+          void actions.submitMessage({ ...EMPTY_DRAFT, text: promptText }, target, EMPTY_DRAFT);
+          return;
+        }
+      }
+      if (request.mode === "toggle-conversation") {
+        if (voiceConversationAvailable()) {
+          toggleVoiceConversation();
+        } else if (voicePhase() === "idle") {
+          void startVoiceRecording();
+        } else if (voicePhase() === "recording") {
+          stopVoiceRecording();
+        }
+        return;
+      }
+      if (!voiceConversationOpen()) {
+        if (voiceConversationAvailable()) {
+          controller.voiceSessions.start(agentId);
+        } else if (voicePhase() === "idle") {
+          void startVoiceRecording();
+        }
+      }
+    },
+  );
 
   return {
     sideThreadOpen,

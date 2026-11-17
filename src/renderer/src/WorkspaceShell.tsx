@@ -8,7 +8,7 @@ import {
   serverWorkspacePhase,
 } from "@openbot/ui/features/servers/ServerConnectionNotice";
 import { useText } from "@openbot/ui/text";
-import { createEffect, createMemo, createSignal, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, onSettled, Show } from "solid-js";
 import { useAccountUsagePolling } from "./features/account/account-usage-polling";
 import { AgentDockHost, useAgentDockPlacement } from "./features/agent-dock/AgentDockHost";
 import { useAgents } from "./features/agents/agents-context";
@@ -22,6 +22,13 @@ import { WorkspaceConversation } from "./features/conversation/WorkspaceConversa
 import { WorkspaceDirectConversation } from "./features/conversation/WorkspaceDirectConversation";
 import { useCustomAgentUsagePolling } from "./features/custom-agents/custom-agent-usage-polling";
 import { serverHasStorage } from "./features/files/storage-usage";
+import { playJarvisWakeChime } from "./features/jarvis/jarvis-chime";
+import {
+  requestJarvisVoiceCommand,
+  resolveMaestroAgent,
+  setMaestroShortcutState,
+} from "./features/jarvis/jarvis-maestro-store";
+import { startJarvisWakeWordEngine } from "./features/jarvis/jarvis-wake-word";
 import { WorkspaceServerOnboarding } from "./features/onboarding/WorkspaceServerOnboarding";
 import { useRemoteDesktop } from "./features/remote-desktop/remote-desktop-context";
 import { WorkspaceRoutineFlows } from "./features/routine-flows/WorkspaceRoutineFlows";
@@ -35,6 +42,7 @@ import { followsServerUpdate, ServerUpdateDialogHost } from "./features/servers/
 import { useServers } from "./features/servers/servers-context";
 import { WorkspaceServerRail } from "./features/servers/WorkspaceServerRail";
 import { useSettings } from "./features/settings/settings-context";
+import { voicePort } from "./features/settings/voice-port";
 import { WorkspaceSidebar } from "./features/sidebar/WorkspaceSidebar";
 import { TasksPanel } from "./features/tasks/TasksPanel";
 import { createHostRestartToasts, type HostRestartView, noteServerAgents } from "./features/updates/host-restart-toast";
@@ -44,6 +52,7 @@ import { WindowPageView } from "./features/window/WindowPageView";
 import { WorkspacePageRail } from "./features/window/WorkspacePageRail";
 import { useWindowPage } from "./features/window/window-page-context";
 import { useLayout } from "./layout";
+import { useNavigation } from "./navigation";
 import { usePlatform } from "./platform";
 import { WorkspaceFrame } from "./WorkspaceFrame";
 import { WorkspaceOverlays } from "./WorkspaceOverlays";
@@ -105,6 +114,7 @@ export function WorkspaceShell(props: {
   /* The dock in the window keeps a column at the right edge, so it does not cover the panes. */
   const windowAgentDock = () => agentDockPlacement() === "window" && activeServer() !== undefined;
   const { agentSetupOpen, serverOnboardingOpen, activeAgent, agentList, agentListSettled } = useAgents();
+  const { selectAgent } = useNavigation();
   const { conversations, retryConversation } = useConversation();
   const activeConversation = () => conversations[activeAgent()?.id ?? ""];
   const { activeDirectMember } = useDirectMessages();
@@ -135,6 +145,48 @@ export function WorkspaceShell(props: {
         if (gone) window.close();
       },
     );
+  }
+  if (!chatWindow && !platform.landingPreview) {
+    const activateMaestro = (
+      mode: "toggle-conversation" | "start-conversation" | "send-prompt",
+      promptText?: string,
+    ) => {
+      const maestro = resolveMaestroAgent(agentList(), activeAgent()?.id);
+      if (!maestro) return;
+      playJarvisWakeChime();
+      window.focus();
+      if (layout.sidebarView() === "routines") {
+        layout.setSidebarView("agents");
+      }
+      selectAgent(maestro.id);
+      requestJarvisVoiceCommand({
+        agentId: maestro.id,
+        mode,
+        promptText,
+      });
+    };
+
+    startJarvisWakeWordEngine({
+      onWakeDetected: (commandText) => {
+        if (commandText.length >= 3) {
+          activateMaestro("send-prompt", commandText);
+        } else {
+          activateMaestro("start-conversation");
+        }
+      },
+    });
+
+    onSettled(() => {
+      const voice = voicePort()?.voice;
+      void voice
+        ?.getMaestroShortcut?.()
+        .then(setMaestroShortcutState)
+        .catch(() => {});
+      const stopShortcut = voice?.onMaestroTriggered?.(() => activateMaestro("toggle-conversation")) ?? (() => {});
+      return () => {
+        stopShortcut();
+      };
+    });
   }
   /**
    * The Tasks page follows a server switch. An older joined server has no task routes and no Tasks button,

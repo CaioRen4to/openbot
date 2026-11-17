@@ -1,0 +1,200 @@
+/*
+ * J.A.R.V.I.S. HUD theme tokens layered over the dark base palette.
+ * Keeps all color literals inside @openbot/brand so renderer stylesheets stay 100% tokenized.
+ * Light mode (`data-openbot-color-scheme="light"`) remains untouched as a fallback.
+ */
+
+:root:not([data-openbot-color-scheme="light"]) {
+  /* Deep Stark HUD surfaces */
+  --openbot-bg-frame: #02070f;
+  --openbot-bg-canvas: #030b17;
+  --openbot-bg-canvas-clear: rgba(3, 11, 23, 0);
+  --openbot-bg-sidebar: #020a14;
+  --openbot-bg-native-canvas: #02070f;
+  --openbot-bg-native-sidebar: #020a14;
+  --openbot-bg-sheet: #051324;
+  --openbot-bg-sheet-inset: #02070f;
+  --openbot-bg-grouped: #061528;
+  --openbot-marketplace-detail-bg: #02070f;
+  --openbot-bg-host-inset: #02070f;
+  --openbot-bg-surface: #061528;
+  --openbot-bg-surface-raised: #091d36;
+  --openbot-bg-control: #07192e;
+  --openbot-bg-control-hover: #0b2442;
+  --openbot-bg-control-active: #0f2f54;
+  --openbot-tabs-bar-bg: #041020;
+  --openbot-tabs-pill-bg: #0a223d;
+  --openbot-bg-overlay: rgba(2, 7, 15, 0.92);
+  --openbot-dialog-overlay: rgba(1, 5, 12, 0.62);
+  --openbot-bg-glass: rgba(6, 21, 40, 0.84);
+  --openbot-scroll-edge-overlay: rgba(3, 11, 23, 0.78);
+
+  /* Translucent cyan HUD glass & borders */
+  --openbot-glass-surface: rgba(0, 210, 255, 0.06);
+  --openbot-glass-surface-hover: rgba(0, 210, 255, 0.12);
+  --openbot-glass-border: rgba(0, 210, 255, 0.24);
+  --openbot-glass-highlight: rgba(0, 240, 255, 0.16);
+  --openbot-glass-shadow: rgba(0, 12, 28, 0.55);
+  --openbot-border: rgba(0, 210, 255, 0.16);
+  --openbot-border-strong: rgba(0, 210, 255, 0.3);
+  --openbot-border-grouped: rgba(0, 210, 255, 0.22);
+  --openbot-dialog-ring: rgba(0, 240, 255, 0.35);
+  --openbot-image-outline: rgba(0, 210, 255, 0.24);
+  --openbot-border-focus: #00f0ff;
+  --openbot-hover: rgba(0, 210, 255, 0.09);
+
+  /* Holographic typography & contrast */
+  --openbot-text-primary: #eaf7ff;
+  --openbot-text-secondary: #cfe9f5;
+  --openbot-text-muted: #7aa3bf;
+  --openbot-text-dim: #4c6d85;
+  --openbot-text-readable: rgba(207, 233, 245, 0.74);
+  --openbot-text-placeholder: #6f8ba0;
+  --openbot-text-grouped-secondary: #7aa3bf;
+  --openbot-settings-text-muted: rgba(173, 216, 238, 0.68);
+  --openbot-data-table-border: rgba(0, 210, 255, 0.18);
+  --openbot-data-table-header-text: #7aa3bf;
+  --openbot-data-table-text: #eaf7ff;
+  --openbot-data-table-ring: rgba(0, 210, 255, 0.2);
+
+  /* Inverted primary controls (Arc Reactor Cyan with deep ink text) */
+  --openbot-surface-light: #00d2ff;
+  --openbot-text-on-light: #02070f;
+  --openbot-text-muted-on-light: rgba(2, 7, 15, 0.72);
+  --openbot-text-dim-on-light: rgba(2, 7, 15, 0.45);
+  --openbot-border-on-light: rgba(2, 7, 15, 0.2);
+
+  /* Arc Reactor accent */
+  --openbot-accent: #00d2ff;
+  --openbot-accent-hover: #00f0ff;
+  --openbot-accent-text: #38e4ff;
+  --openbot-accent-soft: rgba(0, 210, 255, 0.14);
+  --openbot-accent-strong: rgba(0, 210, 255, 0.3);
+  --openbot-text-on-accent: #02070f;
+  --openbot-unread-surface: #00d2ff;
+  --openbot-unread-text: #02070f;
+
+  /* Semantic HUD statuses (from hud-tokens.css) */
+  --openbot-success: #00ffaa;
+  --openbot-success-text: #00ffaa;
+  --openbot-success-soft: rgba(0, 255, 170, 0.14);
+  --openbot-success-wash: rgba(0, 255, 170, 0.05);
+  --openbot-warning: #ffb800;
+  --openbot-warning-text: #ffb800;
+  --openbot-warning-soft: rgba(255, 184, 0, 0.14);
+  --openbot-approval-badge-soft: rgba(255, 184, 0, 0.18);
+  --openbot-danger: #ff3b5c;
+  --openbot-danger-hover: #ff5c77;
+  --openbot-danger-text: #ff5c77;
+  --openbot-danger-soft: rgba(255, 59, 92, 0.16);
+  --openbot-danger-soft-hover: rgba(255, 59, 92, 0.28);
+  --openbot-danger-focus: rgba(255, 59, 92, 0.42);
+  --openbot-danger-border: rgba(255, 59, 92, 0.5);
+
+  /* Technical monospace stack */
+  --openbot-font-mono-default:
+    "JetBrains Mono", "Share Tech Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Atmospheric HUD gradients & glows for jarvis-theme.css */
+  --jarvis-canvas-bg:
+    radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(0, 0, 0, 0.52) 100%),
+    radial-gradient(ellipse at 50% 48%, rgba(0, 140, 255, 0.12) 0%, transparent 58%),
+    linear-gradient(rgba(0, 180, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 180, 255, 0.045) 1px, transparent 1px), var(--openbot-bg-canvas);
+  --jarvis-card-bg: linear-gradient(135deg, rgba(4, 15, 30, 0.86), rgba(2, 8, 18, 0.94));
+  --jarvis-panel-glow: inset 0 0 36px rgba(0, 140, 255, 0.06), 0 0 18px rgba(0, 210, 255, 0.08);
+  --jarvis-composer-glow: inset 0 1px 0 rgba(0, 240, 255, 0.12), 0 0 18px rgba(0, 210, 255, 0.08);
+  --jarvis-composer-focus-glow: inset 0 1px 0 rgba(0, 240, 255, 0.22), 0 0 22px rgba(0, 240, 255, 0.2);
+  --jarvis-active-row-glow: inset 2px 0 0 #00f0ff, 0 0 14px rgba(0, 210, 255, 0.12);
+  --jarvis-dialog-glow:
+    0 0 0 1px rgba(0, 240, 255, 0.3), 0 18px 48px rgba(0, 6, 16, 0.78), 0 0 28px rgba(0, 180, 255, 0.12);
+
+  /* Dynamic Island (jarvis-overlay style) */
+  --jarvis-island-bg:
+    radial-gradient(140px 80px at 26px 28px, rgba(56, 189, 248, 0.18), transparent 75%),
+    linear-gradient(135deg, rgba(11, 24, 39, 0.97) 0%, rgba(5, 13, 23, 0.985) 68%, rgba(8, 19, 34, 0.98) 100%);
+  --jarvis-island-notch-bg: #050d17;
+  --jarvis-island-border: rgba(86, 180, 233, 0.44);
+  --jarvis-island-inset-shadow: inset 0 1px 0 rgba(196, 235, 255, 0.18), inset 0 -1px 0 rgba(14, 165, 233, 0.14);
+  --jarvis-island-outer-glow: drop-shadow(0 0 10px rgba(56, 189, 248, 0.28));
+
+  --jarvis-island-working-border: rgba(34, 211, 238, 0.62);
+  --jarvis-island-working-glow: drop-shadow(0 0 12px rgba(0, 240, 255, 0.36));
+
+  --jarvis-island-approval-bg:
+    radial-gradient(180px 95px at 32px 28px, rgba(239, 68, 68, 0.22), transparent 78%),
+    linear-gradient(135deg, rgba(24, 11, 18, 0.98) 0%, rgba(9, 9, 17, 0.99) 70%);
+  --jarvis-island-approval-border: rgba(248, 113, 113, 0.7);
+  --jarvis-island-approval-glow: drop-shadow(0 0 14px rgba(239, 68, 68, 0.42));
+
+  --jarvis-island-error-border: rgba(251, 191, 36, 0.6);
+  --jarvis-island-error-glow: drop-shadow(0 0 12px rgba(251, 191, 36, 0.34));
+
+  /* Mini-orb inside Dynamic Island leading slot */
+  --jarvis-mini-orb-bg: radial-gradient(circle at 38% 35%, rgba(88, 208, 255, 0.28), rgba(10, 32, 54, 0.94) 68%);
+  --jarvis-mini-orb-shadow: 0 0 10px rgba(56, 189, 248, 0.34);
+  --jarvis-mini-orb-ring: rgba(92, 184, 230, 0.38);
+  --jarvis-mini-orb-arc-primary: #38bdf8;
+  --jarvis-mini-orb-arc-secondary: #2563eb;
+  --jarvis-mini-orb-inner-ring: rgba(125, 211, 252, 0.42);
+  --jarvis-mini-orb-approval-bg: radial-gradient(
+    circle at 38% 35%,
+    rgba(248, 113, 113, 0.32),
+    rgba(45, 12, 18, 0.94) 68%
+  );
+  --jarvis-mini-orb-approval-arc: #f87171;
+  --jarvis-mini-orb-error-arc: #fbbf24;
+
+  /* Sidebar J.A.R.V.I.S. Core Widget */
+  --jarvis-core-card-bg: linear-gradient(135deg, rgba(4, 15, 30, 0.88), rgba(2, 8, 18, 0.96));
+  --jarvis-core-card-border: rgba(0, 210, 255, 0.28);
+  --jarvis-core-card-shadow: inset 0 1px 0 rgba(0, 240, 255, 0.14), 0 0 16px rgba(0, 210, 255, 0.1);
+
+  /* Tactical HUD cards, chat console, code diagnostics & usage telemetry */
+  --jarvis-hud-card-bg:
+    linear-gradient(rgba(0, 240, 255, 0.72), rgba(0, 240, 255, 0.72)) 0 0 / 12px 2px no-repeat,
+    linear-gradient(rgba(0, 240, 255, 0.72), rgba(0, 240, 255, 0.72)) 0 0 / 2px 12px no-repeat,
+    linear-gradient(rgba(0, 240, 255, 0.72), rgba(0, 240, 255, 0.72)) 100% 0 / 12px 2px no-repeat,
+    linear-gradient(rgba(0, 240, 255, 0.72), rgba(0, 240, 255, 0.72)) 100% 0 / 2px 12px no-repeat,
+    linear-gradient(rgba(0, 240, 255, 0.72), rgba(0, 240, 255, 0.72)) 0 100% / 12px 2px no-repeat,
+    linear-gradient(rgba(0, 240, 255, 0.72), rgba(0, 240, 255, 0.72)) 0 100% / 2px 12px no-repeat,
+    linear-gradient(rgba(0, 240, 255, 0.72), rgba(0, 240, 255, 0.72)) 100% 100% / 12px 2px no-repeat,
+    linear-gradient(rgba(0, 240, 255, 0.72), rgba(0, 240, 255, 0.72)) 100% 100% / 2px 12px no-repeat,
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 3px),
+    linear-gradient(135deg, rgba(4, 15, 30, 0.88), rgba(2, 8, 18, 0.95));
+  --jarvis-hud-card-shadow: inset 0 1px 0 rgba(0, 240, 255, 0.1), 0 0 16px rgba(0, 180, 255, 0.08);
+  --jarvis-hud-card-hover-shadow: inset 0 1px 0 rgba(0, 240, 255, 0.22), 0 0 22px rgba(0, 210, 255, 0.16);
+  --jarvis-agent-bubble-bg:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.015) 0 1px, transparent 1px 3px),
+    linear-gradient(135deg, rgba(5, 19, 36, 0.86), rgba(3, 10, 22, 0.92));
+  --jarvis-user-bubble-bg: linear-gradient(135deg, rgba(0, 119, 255, 0.24), rgba(0, 210, 255, 0.14));
+  --jarvis-user-bubble-border: rgba(0, 240, 255, 0.36);
+  --jarvis-code-bg: #020914;
+  --jarvis-code-header-bg: rgba(0, 210, 255, 0.08);
+  --jarvis-code-glow: inset 0 1px 0 rgba(0, 240, 255, 0.12), 0 0 14px rgba(0, 140, 255, 0.08);
+  --jarvis-number-glow: 0 0 18px rgba(0, 210, 255, 0.32);
+}
+
+/* Neural Orb canvas tokens available across both schemes */
+:root {
+  --hud-cyan: #00d2ff;
+  --hud-cyan-hot: #00f0ff;
+  --hud-blue: #0077ff;
+  --hud-white: #e0ffff;
+  --hud-green: #00ffaa;
+  --hud-amber: #ffb800;
+  --hud-red: #ff3b5c;
+  --hud-gray: #5a6b7d;
+  --jarvis-orb-shell-0: #106d9b;
+  --jarvis-orb-shell-1: #063b68;
+  --jarvis-orb-shell-2: #02152e;
+  --jarvis-orb-shell-3: #06385a;
+  --jarvis-orb-halo-1: rgba(0, 173, 255, 0.27);
+  --jarvis-orb-halo-2: rgba(0, 127, 255, 0.1);
+  --jarvis-orb-light-1: rgba(87, 228, 255, 0.7);
+  --jarvis-orb-light-2: rgba(21, 138, 255, 0.29);
+  --jarvis-orb-light-3: rgba(21, 138, 255, 0);
+  --jarvis-orb-rim-0: #e6fcff;
+  --jarvis-orb-rim-3: #8874ff;
+  --jarvis-orb-thinking: #a18aff;
+}

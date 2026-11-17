@@ -10,6 +10,7 @@ import { currentText } from "@openbot/ui/text";
 import { createEffect, createStore, onCleanup } from "solid-js";
 import { desktopAnalytics } from "../../../analytics";
 import { encodePcm16, recordingToSamples, recordingToWav } from "../../../voice-recording";
+import { setJarvisMicAudio } from "../../jarvis/jarvis-audio-signal";
 import { holdSpeech, releaseSpeech, SPEECH_LEVEL_COUNT, speechReading } from "../../speech/speech-playback";
 import { speechPort } from "../../speech/speech-port";
 import {
@@ -531,10 +532,14 @@ export function createVoiceConversation(deps: VoiceConversationDeps) {
         shown += (level - shown) * (level > shown ? 0.7 : 0.45);
         const value = shown;
         // While the agent thinks or speaks, the pane shows its state, not the microphone.
-        if (step === "listening")
+        if (step === "listening") {
           setState((draft) => {
             draft.levels = [...draft.levels.slice(1), value];
           });
+          setJarvisMicAudio("conversation", true, value);
+        } else {
+          setJarvisMicAudio("conversation", false);
+        }
         silentFor = loudness >= SPEECH_LOUDNESS ? 0 : silentFor + LEVEL_INTERVAL_MS;
         if (
           !current.spoke &&
@@ -783,6 +788,7 @@ export function createVoiceConversation(deps: VoiceConversationDeps) {
     void current.context?.close();
     current.context = undefined;
     for (const track of current.stream.getTracks()) track.stop();
+    setJarvisMicAudio("conversation", false);
   }
 
   /** Discards the turn that listens now: nothing is transcribed. */

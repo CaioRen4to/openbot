@@ -2,6 +2,7 @@ import {
   isCodexLiveVoice,
   isDictationKeyProvider,
   isElevenLabsSpeechVoice,
+  isJarvisShortcutAccelerator,
   isSpeechKeyProvider,
   isSpeechLanguage,
   isSpeechModelId,
@@ -11,6 +12,7 @@ import {
   isVoiceModelId,
   isVoiceServerRoutes,
   isXaiSpeechVoice,
+  type JarvisShortcutSettings,
   SPEECH_LIMITS,
   type SpeechApiKeyInput,
   type SpeechInput,
@@ -213,5 +215,15 @@ export function parseVoiceServerSave(input: unknown): VoiceServerSave {
         voice: routes.voice,
       },
     },
+  };
+}
+
+export function parseJarvisShortcutSettings(input: unknown): JarvisShortcutSettings {
+  if (!isObject(input) || typeof input.enabled !== "boolean" || !isJarvisShortcutAccelerator(input.accelerator)) {
+    throw new Error("Jarvis shortcut settings need an enabled flag and a shortcut accelerator.");
+  }
+  return {
+    enabled: input.enabled,
+    accelerator: input.accelerator.trim(),
   };
 }

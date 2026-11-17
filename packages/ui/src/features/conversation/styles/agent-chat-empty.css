@@ -22,10 +22,24 @@
   text-align: center;
 }
 
-.agent-chat-empty-avatar.agent-avatar {
-  width: calc(var(--openbot-control-xl) * 1.6);
-  height: calc(var(--openbot-control-xl) * 1.6);
+.agent-chat-empty-orb {
+  position: relative;
+  width: 156px;
+  height: 156px;
+  display: grid;
+  place-items: center;
   margin-bottom: var(--openbot-space-2);
+}
+
+.agent-chat-empty-avatar.agent-avatar {
+  position: absolute;
+  z-index: 2;
+  right: 6px;
+  bottom: 6px;
+  width: var(--openbot-control-xl);
+  height: var(--openbot-control-xl);
+  border-radius: var(--openbot-radius-pill);
+  box-shadow: 0 0 0 2px var(--openbot-bg-canvas);
 }
 
 .agent-chat-empty-title {

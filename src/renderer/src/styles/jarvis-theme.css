@@ -1,0 +1,371 @@
+/*
+ * J.A.R.V.I.S. atmospheric HUD styling layered over existing OpenBot components.
+ * Uses only variables from @openbot/brand/tokens-jarvis.css and existing markup selectors
+ * so zero functional logic, layout geometry, or UI foundation rules are disrupted.
+ */
+
+:root:not([data-openbot-color-scheme="light"]) .app-window > .app-frame-edge::before {
+  background: var(--jarvis-canvas-bg);
+  background-size:
+    100% 100%,
+    100% 100%,
+    48px 48px,
+    48px 48px,
+    auto;
+  background-position:
+    0 0,
+    0 0,
+    -1px -1px,
+    -1px -1px,
+    0 0;
+  box-shadow: var(--jarvis-panel-glow);
+}
+
+:root:not([data-openbot-color-scheme="light"]) .app-frame:not(.app-frame-edge) .conversation-panel {
+  background: var(--jarvis-canvas-bg);
+  background-size:
+    100% 100%,
+    100% 100%,
+    48px 48px,
+    48px 48px,
+    auto;
+}
+
+:root:not([data-openbot-color-scheme="light"]) .composer {
+  background: var(--jarvis-card-bg);
+  box-shadow: var(--jarvis-composer-glow);
+}
+
+:root:not([data-openbot-color-scheme="light"]) .composer:focus-within {
+  border-color: var(--openbot-border-focus);
+  box-shadow: var(--jarvis-composer-focus-glow);
+}
+
+:root:not([data-openbot-color-scheme="light"]) .agent-row.agent-row-active {
+  box-shadow: var(--jarvis-active-row-glow);
+}
+
+:root:not([data-openbot-color-scheme="light"]) .settings-modal-card {
+  background: var(--jarvis-card-bg);
+  border-color: var(--openbot-border-strong);
+}
+
+:root:not([data-openbot-color-scheme="light"]) [role="dialog"] {
+  box-shadow: var(--jarvis-dialog-glow);
+}
+
+/* Dynamic Island — jarvis-overlay holographic capsule & mini-orb */
+@keyframes jarvis-mini-orb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes jarvis-mini-orb-spin-reverse {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+:root:not([data-openbot-color-scheme="light"]) .dynamic-island-external {
+  filter: var(--jarvis-island-outer-glow);
+}
+
+:root:not([data-openbot-color-scheme="light"]) .dynamic-island-external .dynamic-island-silhouette {
+  border: 1px solid var(--jarvis-island-border);
+  background: var(--jarvis-island-bg);
+  box-shadow: var(--jarvis-island-inset-shadow);
+  transition:
+    border-color var(--openbot-duration-normal) var(--openbot-ease-out),
+    box-shadow var(--openbot-duration-normal) var(--openbot-ease-out);
+}
+
+:root:not([data-openbot-color-scheme="light"]) .dynamic-island-external.dynamic-island-working {
+  filter: var(--jarvis-island-working-glow);
+}
+
+:root:not([data-openbot-color-scheme="light"])
+  .dynamic-island-external.dynamic-island-working
+  .dynamic-island-silhouette {
+  border-color: var(--jarvis-island-working-border);
+}
+
+:root:not([data-openbot-color-scheme="light"]) .dynamic-island-external.dynamic-island-approval {
+  filter: var(--jarvis-island-approval-glow);
+}
+
+:root:not([data-openbot-color-scheme="light"])
+  .dynamic-island-external.dynamic-island-approval
+  .dynamic-island-silhouette {
+  border-color: var(--jarvis-island-approval-border);
+  background: var(--jarvis-island-approval-bg);
+}
+
+:root:not([data-openbot-color-scheme="light"]) .dynamic-island-external.dynamic-island-failed {
+  filter: var(--jarvis-island-error-glow);
+}
+
+:root:not([data-openbot-color-scheme="light"])
+  .dynamic-island-external.dynamic-island-failed
+  .dynamic-island-silhouette {
+  border-color: var(--jarvis-island-error-border);
+}
+
+:root:not([data-openbot-color-scheme="light"])
+  .openbot-dynamic-island:not(.dynamic-island-external)
+  .dynamic-island-silhouette-body {
+  background: var(--jarvis-island-notch-bg);
+  box-shadow: var(--jarvis-island-inset-shadow);
+}
+
+:root:not([data-openbot-color-scheme="light"])
+  .openbot-dynamic-island:not(.dynamic-island-external)
+  .dynamic-island-shoulder
+  path {
+  fill: var(--jarvis-island-notch-bg);
+}
+
+:root:not([data-openbot-color-scheme="light"])
+  .openbot-dynamic-island
+  .dynamic-island-surface-leading-anchor:not(.dynamic-island-surface-compact-identity) {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  flex-basis: 24px;
+  padding: 5px;
+  border-radius: var(--openbot-radius-pill);
+  background: var(--jarvis-mini-orb-bg);
+  box-shadow: var(--jarvis-mini-orb-shadow);
+}
+
+:root:not([data-openbot-color-scheme="light"])
+  .openbot-dynamic-island
+  .dynamic-island-surface-leading-anchor:not(.dynamic-island-surface-compact-identity)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--jarvis-mini-orb-ring);
+  border-top: 2px solid var(--jarvis-mini-orb-arc-primary);
+  border-right: 1.5px solid var(--jarvis-mini-orb-arc-secondary);
+  border-radius: var(--openbot-radius-pill);
+  pointer-events: none;
+  animation: jarvis-mini-orb-spin 9s linear infinite;
+}
+
+:root:not([data-openbot-color-scheme="light"])
+  .openbot-dynamic-island
+  .dynamic-island-surface-leading-anchor:not(.dynamic-island-surface-compact-identity)::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px dashed var(--jarvis-mini-orb-inner-ring);
+  border-radius: var(--openbot-radius-pill);
+  pointer-events: none;
+  animation: jarvis-mini-orb-spin-reverse 6.5s linear infinite;
+}
+
+:root:not([data-openbot-color-scheme="light"])
+  .openbot-dynamic-island[data-hovered="true"]
+  .dynamic-island-surface-leading-anchor:not(.dynamic-island-surface-compact-identity)::before {
+  animation-duration: 2.6s;
+}
+
+:root:not([data-openbot-color-scheme="light"])
+  .dynamic-island-external.dynamic-island-idle
+  .dynamic-island-surface-logo {
+  transform: none;
+}
+
+:root:not([data-openbot-color-scheme="light"])
+  .openbot-dynamic-island.dynamic-island-approval
+  .dynamic-island-surface-leading-anchor:not(.dynamic-island-surface-compact-identity) {
+  background: var(--jarvis-mini-orb-approval-bg);
+}
+
+:root:not([data-openbot-color-scheme="light"])
+  .openbot-dynamic-island.dynamic-island-approval
+  .dynamic-island-surface-leading-anchor:not(.dynamic-island-surface-compact-identity)::before {
+  border-top-color: var(--jarvis-mini-orb-approval-arc);
+}
+
+:root:not([data-openbot-color-scheme="light"])
+  .openbot-dynamic-island.dynamic-island-failed
+  .dynamic-island-surface-leading-anchor:not(.dynamic-island-surface-compact-identity)::before {
+  border-top-color: var(--jarvis-mini-orb-error-arc);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-openbot-color-scheme="light"])
+    .openbot-dynamic-island
+    .dynamic-island-surface-leading-anchor:not(.dynamic-island-surface-compact-identity)::before,
+  :root:not([data-openbot-color-scheme="light"])
+    .openbot-dynamic-island
+    .dynamic-island-surface-leading-anchor:not(.dynamic-island-surface-compact-identity)::after {
+    animation: none;
+  }
+}
+
+/* Sidebar J.A.R.V.I.S. Core Neural Orb card */
+.sidebar-jarvis-core {
+  margin: var(--openbot-space-2) var(--openbot-space-2) var(--openbot-space-2);
+  display: flex;
+  align-items: center;
+  gap: var(--openbot-space-2);
+  padding: var(--openbot-space-2) var(--openbot-space-2);
+  border: 1px solid var(--jarvis-core-card-border);
+  border-radius: var(--openbot-radius-card);
+  background: var(--jarvis-core-card-bg);
+  box-shadow: var(--jarvis-core-card-shadow);
+  transition:
+    border-color var(--openbot-duration-normal) var(--openbot-ease-out),
+    box-shadow var(--openbot-duration-normal) var(--openbot-ease-out);
+}
+
+.sidebar-jarvis-core:hover {
+  border-color: var(--openbot-accent);
+  box-shadow: var(--jarvis-composer-focus-glow);
+}
+
+.sidebar-jarvis-core-button {
+  min-width: 0;
+  flex: 1 1 auto;
+  height: auto;
+  justify-content: flex-start;
+  gap: var(--openbot-space-2);
+  padding: 0;
+  text-align: start;
+}
+
+.sidebar-jarvis-core-wake {
+  flex: 0 0 auto;
+  height: auto;
+  padding: var(--openbot-space-1) var(--openbot-space-2);
+  border: 1px solid var(--openbot-border);
+  border-radius: var(--openbot-radius-pill);
+  font-family: var(--openbot-font-mono);
+  font-size: var(--openbot-text-xs);
+  letter-spacing: var(--openbot-tracking-wide);
+  color: var(--openbot-text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--openbot-space-1);
+}
+
+.sidebar-jarvis-core-wake[data-active="true"] {
+  border-color: var(--openbot-accent);
+  color: var(--openbot-accent-text);
+  box-shadow: var(--jarvis-composer-focus-glow);
+}
+
+.sidebar-jarvis-core-wake-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--openbot-radius-pill);
+  background: var(--openbot-text-muted);
+}
+
+.sidebar-jarvis-core-wake[data-active="true"] .sidebar-jarvis-core-wake-dot {
+  background: var(--openbot-accent);
+}
+
+.sidebar-jarvis-core-orb {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+}
+
+.sidebar-jarvis-core-meta {
+  min-width: 0;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--openbot-space-0-5);
+}
+
+.sidebar-jarvis-core-title {
+  color: var(--openbot-text-primary);
+  font-family: var(--openbot-font-mono);
+  font-size: var(--openbot-text-sm);
+  font-weight: var(--openbot-weight-semibold);
+  letter-spacing: var(--openbot-tracking-wide);
+}
+
+.sidebar-jarvis-core-status {
+  color: var(--openbot-accent-text);
+  font-family: var(--openbot-font-mono);
+  font-size: var(--openbot-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.sidebar-jarvis-core-status[data-state="attention"] {
+  color: var(--openbot-warning-text);
+}
+
+.sidebar-jarvis-core-status[data-state="error"] {
+  color: var(--openbot-danger-text);
+}
+
+.sidebar-jarvis-core-status[data-state="idle"] {
+  color: var(--openbot-text-muted);
+}
+
+/* Etapa 4 — Tactical HUD console: chat bubbles, code diagnostics, interaction & usage cards */
+:root:not([data-openbot-color-scheme="light"]) .message-entry-agent .ui-bubble:not(.message-bubble-colored) {
+  border: 1px solid var(--openbot-border-strong);
+  background: var(--jarvis-agent-bubble-bg);
+  box-shadow: var(--jarvis-hud-card-shadow);
+}
+
+:root:not([data-openbot-color-scheme="light"]) .message-entry-user .ui-bubble:not(.message-bubble-colored) {
+  border: 1px solid var(--jarvis-user-bubble-border);
+  background: var(--jarvis-user-bubble-bg);
+  color: var(--openbot-text-primary);
+  box-shadow: var(--jarvis-hud-card-shadow);
+}
+
+:root:not([data-openbot-color-scheme="light"]) .message-code-block {
+  border: 1px solid var(--openbot-border-strong);
+  background: var(--jarvis-code-bg);
+  box-shadow: var(--jarvis-code-glow);
+}
+
+:root:not([data-openbot-color-scheme="light"]) .message-code-header {
+  border-bottom: 1px solid var(--openbot-border);
+  background: var(--jarvis-code-header-bg);
+  font-family: var(--openbot-font-mono);
+}
+
+:root:not([data-openbot-color-scheme="light"]) .conversation-interaction-card,
+:root:not([data-openbot-color-scheme="light"]) .question-prompt-bubble.ui-bubble,
+:root:not([data-openbot-color-scheme="light"]) .agent-usage-notice {
+  border: 1px solid var(--openbot-border-strong);
+  background: var(--jarvis-hud-card-bg);
+  box-shadow: var(--jarvis-hud-card-shadow);
+  transition:
+    border-color var(--openbot-duration-normal) var(--openbot-ease-out),
+    box-shadow var(--openbot-duration-normal) var(--openbot-ease-out);
+}
+
+:root:not([data-openbot-color-scheme="light"]) .conversation-interaction-card:hover,
+:root:not([data-openbot-color-scheme="light"]) .question-prompt-bubble.ui-bubble:hover {
+  border-color: var(--openbot-accent);
+  box-shadow: var(--jarvis-hud-card-hover-shadow);
+}
+
+:root:not([data-openbot-color-scheme="light"]) .agent-usage-provider {
+  padding: var(--openbot-space-4);
+  border: 1px solid var(--openbot-border-strong);
+  border-radius: var(--openbot-radius-card);
+  background: var(--jarvis-hud-card-bg);
+  box-shadow: var(--jarvis-hud-card-shadow);
+}
+
+:root:not([data-openbot-color-scheme="light"]) .agent-usage-hero {
+  color: var(--openbot-accent-text);
+  font-family: var(--openbot-font-mono);
+  text-shadow: var(--jarvis-number-glow);
+}
+
+:root:not([data-openbot-color-scheme="light"]) .sidebar-jarvis-core-button {
+  background: var(--jarvis-hud-card-bg);
+}

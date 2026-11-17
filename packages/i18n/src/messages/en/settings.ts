@@ -793,6 +793,20 @@ export const messages = defineMessages("settings", {
   "settings.voice.server.probeFailed": "Could not connect to the voice server.",
   "settings.voice.server.saveFailed": "Could not save the voice server.",
   "settings.voice.server.removeFailed": "Could not remove the voice server.",
+  "settings.voice.jarvis.section": "J.A.R.V.I.S. & Maestro",
+  "settings.voice.jarvis.maestro.title": "Maestro agent",
+  "settings.voice.jarvis.maestro.description":
+    'The primary orchestrator focused when pressing the global hotkey or saying "Jarvis".',
+  "settings.voice.jarvis.maestro.auto": "Automatic (Jarvis / Maestro / Active)",
+  "settings.voice.jarvis.shortcut.title": "Global voice hotkey",
+  "settings.voice.jarvis.shortcut.description": "Brings OpenBot to the front, focuses Maestro, and starts voice mode.",
+  "settings.voice.jarvis.shortcut.key": "Shortcut key",
+  "settings.voice.jarvis.wakeWord.title": 'Continuous wake word ("Jarvis")',
+  "settings.voice.jarvis.wakeWord.description":
+    'Listens locally for "Jarvis" or "Ei, Jarvis" using local speech transcription while OpenBot is open.',
+  "settings.voice.jarvis.wakeWord.statusOn": 'Listening in standby for "Jarvis"',
+  "settings.voice.jarvis.wakeWord.statusPaused": "Paused while voice conversation or dictation uses the mic",
+  "settings.voice.jarvis.wakeWord.statusError": "Microphone error: {error}",
   // No value may end with the word "import": the CommonJS shim of electron-vite reads `import"` in the
   // main bundle as an import statement and inserts its code inside the string.
   "settings.transfer.title": "Move this server to another computer",

@@ -11,6 +11,7 @@ import {
   isSpeechVoice,
   isVoiceModelId,
   isXaiSpeechVoice,
+  JARVIS_SHORTCUT_ACCELERATORS,
   modelLanguage,
   SPEECH_MODEL,
   SPEECH_MODEL_ID,
@@ -50,6 +51,16 @@ import {
 } from "@openbot/ui";
 import { useText } from "@openbot/ui/text";
 import { createMemo, createSignal, Show } from "solid-js";
+import {
+  type MaestroCandidateAgent,
+  maestroAgentId,
+  maestroShortcut,
+  setMaestroAgentId,
+  setMaestroShortcutState,
+  setWakeWordEnabled,
+  wakeWordEnabled,
+} from "../jarvis/jarvis-maestro-store";
+import { wakeWordError, wakeWordStatus } from "../jarvis/jarvis-wake-word";
 import type { CodexLiveAccess } from "../speech/codex-live-access";
 import type { SettingsVoiceStore } from "./settings-voice-store";
 import {
@@ -61,6 +72,7 @@ import {
   VoiceModelRow,
 } from "./VoiceModelRow";
 import { VoiceServerDialog } from "./VoiceServerDialog";
+import { voicePort } from "./voice-port";
 
 const MODEL_DESCRIPTION = {
   "parakeet-tdt-0.6b-v3": "settings.voice.model.parakeet.description",
@@ -206,6 +218,7 @@ interface SettingsVoiceTabProps {
   codexLiveAccess?: CodexLiveAccess | undefined;
   /** Opens the Providers section of this computer, where Codex signs in. */
   onConnectCodex?: (() => void) | undefined;
+  agents?: readonly MaestroCandidateAgent[] | undefined;
 }
 
 export function SettingsVoiceTab(props: SettingsVoiceTabProps) {
@@ -702,6 +715,113 @@ export function SettingsVoiceTab(props: SettingsVoiceTabProps) {
               </Item>
             )}
           </Show>
+        </ItemGroup>
+      </SettingsSection>
+
+      <SettingsSection data-settings-row="settings.voice.jarvis.section" title={t("settings.voice.jarvis.section")}>
+        <ItemGroup class="settings-modal-card">
+          <Item class="settings-modal-row">
+            <ItemContent>
+              <ItemTitle>{t("settings.voice.jarvis.maestro.title")}</ItemTitle>
+              <ItemDescription>{t("settings.voice.jarvis.maestro.description")}</ItemDescription>
+            </ItemContent>
+            <ItemActions>
+              <Select<string>
+                class="settings-modal-select"
+                options={["auto", ...(props.agents ?? []).map((agent) => agent.id)]}
+                value={maestroAgentId() ?? "auto"}
+                onChange={(next) => {
+                  if (!next) return;
+                  setMaestroAgentId(next === "auto" ? null : next);
+                }}
+                placement="bottom-end"
+                itemComponent={(selectProps) => {
+                  const id = selectProps.item.rawValue;
+                  const agent = (props.agents ?? []).find((entry) => entry.id === id);
+                  return (
+                    <SelectItem item={selectProps.item}>
+                      {id === "auto" ? t("settings.voice.jarvis.maestro.auto") : (agent?.name ?? id)}
+                    </SelectItem>
+                  );
+                }}
+              >
+                <SelectTrigger size="sm" aria-label={t("settings.voice.jarvis.maestro.title")}>
+                  <SelectValue<string>>
+                    {(state) => {
+                      const id = state.selectedOption();
+                      if (!id || id === "auto") return t("settings.voice.jarvis.maestro.auto");
+                      return (props.agents ?? []).find((entry) => entry.id === id)?.name ?? id;
+                    }}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent mount={props.selectMount} />
+              </Select>
+            </ItemActions>
+          </Item>
+
+          <SwitchField
+            class="settings-modal-row"
+            label={t("settings.voice.jarvis.shortcut.title")}
+            description={t("settings.voice.jarvis.shortcut.description")}
+            checked={maestroShortcut().enabled}
+            onChange={(enabled) => {
+              const next = { ...maestroShortcut(), enabled };
+              setMaestroShortcutState(next);
+              void voicePort()
+                ?.voice?.setMaestroShortcut?.(next)
+                .then(setMaestroShortcutState)
+                .catch(() => {});
+            }}
+          />
+
+          <Show when={maestroShortcut().enabled}>
+            <Item class="settings-modal-row">
+              <ItemContent>
+                <ItemTitle>{t("settings.voice.jarvis.shortcut.key")}</ItemTitle>
+              </ItemContent>
+              <ItemActions>
+                <Select<string>
+                  class="settings-modal-select"
+                  options={[...JARVIS_SHORTCUT_ACCELERATORS]}
+                  value={maestroShortcut().accelerator}
+                  onChange={(accelerator) => {
+                    if (!accelerator) return;
+                    const next = { ...maestroShortcut(), accelerator };
+                    setMaestroShortcutState(next);
+                    void voicePort()
+                      ?.voice?.setMaestroShortcut?.(next)
+                      .then(setMaestroShortcutState)
+                      .catch(() => {});
+                  }}
+                  placement="bottom-end"
+                  itemComponent={(selectProps) => (
+                    <SelectItem item={selectProps.item}>{selectProps.item.rawValue}</SelectItem>
+                  )}
+                >
+                  <SelectTrigger size="sm" aria-label={t("settings.voice.jarvis.shortcut.key")}>
+                    <SelectValue<string>>{(state) => state.selectedOption()}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent mount={props.selectMount} />
+                </Select>
+              </ItemActions>
+            </Item>
+          </Show>
+
+          <SwitchField
+            class="settings-modal-row"
+            label={t("settings.voice.jarvis.wakeWord.title")}
+            description={
+              wakeWordEnabled()
+                ? wakeWordStatus() === "error" && wakeWordError()
+                  ? t("settings.voice.jarvis.wakeWord.statusError", { error: wakeWordError() ?? "" })
+                  : wakeWordStatus() === "paused"
+                    ? t("settings.voice.jarvis.wakeWord.statusPaused")
+                    : t("settings.voice.jarvis.wakeWord.statusOn")
+                : t("settings.voice.jarvis.wakeWord.description")
+            }
+            checked={wakeWordEnabled()}
+            onChange={(enabled) => setWakeWordEnabled(enabled)}
+          />
         </ItemGroup>
       </SettingsSection>
       <Show when={editingServer()}>

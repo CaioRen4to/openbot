@@ -4,6 +4,7 @@ import { documentFocused } from "../../document-focus";
 import { useText } from "../../text";
 import { prefersReducedMotion } from "../../utils";
 import { AgentAvatar } from "../agents/AgentAvatar";
+import { JarvisOrb, type JarvisOrbSatellite, type OrbBaseState } from "../jarvis/JarvisOrb";
 import { AGENT_ACTIVITY_LABELS, AgentActivityIndicator } from "./AgentActivity";
 import type { AgentStep } from "./AgentSteps";
 import { ChatMessageRow } from "./ChatMessageRow";
@@ -17,6 +18,9 @@ export interface AgentChatEmptyStateProps {
   samplePrompt?: string | undefined;
   /** The name of one of the agent's skills, for a step of the sample turn. */
   sampleSkillName?: string | undefined;
+  orbStatus?: OrbBaseState | undefined;
+  orbAudioLevel?: number | undefined;
+  runningAgents?: readonly JarvisOrbSatellite[] | undefined;
 }
 
 /** One step of the loop. A turn is: rest, prompt, one step for each agent step, hold, fade. */
@@ -41,7 +45,15 @@ export function AgentChatEmptyState(props: AgentChatEmptyStateProps) {
   return (
     <div class="agent-chat-empty" data-still={still ? "" : undefined}>
       <div class="agent-chat-empty-pitch">
-        <AgentAvatar agent={props.agent} mood="idle" motion="always" class="agent-chat-empty-avatar" />
+        <div class="agent-chat-empty-orb">
+          <JarvisOrb
+            status={props.orbStatus ?? "idle"}
+            audioLevel={props.orbAudioLevel}
+            runningAgents={props.runningAgents}
+            qualityTier={still ? "ECONOMIA" : undefined}
+          />
+          <AgentAvatar agent={props.agent} mood="idle" motion="always" class="agent-chat-empty-avatar" />
+        </div>
         <h2 class="agent-chat-empty-title">
           <span class="agent-chat-empty-ready">{t("chat.empty.agent.ready", { name: props.agent.name })}</span>
           <span>

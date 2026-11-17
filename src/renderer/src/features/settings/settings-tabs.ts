@@ -136,6 +136,18 @@ export const navItems: ReadonlyArray<SettingsNavItem> = [
         titleKey: "settings.voice.speech.codexLive.title",
         descriptionKey: "settings.voice.speech.codexLive.description",
       },
+      {
+        titleKey: "settings.voice.jarvis.maestro.title",
+        descriptionKey: "settings.voice.jarvis.maestro.description",
+      },
+      {
+        titleKey: "settings.voice.jarvis.shortcut.title",
+        descriptionKey: "settings.voice.jarvis.shortcut.description",
+      },
+      {
+        titleKey: "settings.voice.jarvis.wakeWord.title",
+        descriptionKey: "settings.voice.jarvis.wakeWord.description",
+      },
     ],
   },
   {

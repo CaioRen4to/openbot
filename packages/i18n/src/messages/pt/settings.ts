@@ -834,4 +834,19 @@ export const messages = {
   "settings.transfer.copy.open": "Abrir {server}",
   "settings.transfer.copy.loadFailed": "Não foi possível ler os agentes",
   "settings.transfer.copy.failed": "A cópia não terminou",
+  "settings.voice.jarvis.section": "J.A.R.V.I.S. & Maestro",
+  "settings.voice.jarvis.maestro.title": "Agente Maestro",
+  "settings.voice.jarvis.maestro.description":
+    'O orquestrador principal focado ao usar o atalho global ou dizer "Jarvis".',
+  "settings.voice.jarvis.maestro.auto": "Automático (Jarvis / Maestro / Ativo)",
+  "settings.voice.jarvis.shortcut.title": "Atalho global de voz",
+  "settings.voice.jarvis.shortcut.description":
+    "Traz o OpenBot para frente, foca no Maestro e inicia a captura de voz.",
+  "settings.voice.jarvis.shortcut.key": "Tecla do atalho",
+  "settings.voice.jarvis.wakeWord.title": 'Palavra de ativação contínua ("Jarvis")',
+  "settings.voice.jarvis.wakeWord.description":
+    'Escuta localmente por "Jarvis" ou "Ei, Jarvis" usando a transcrição local enquanto o OpenBot estiver aberto.',
+  "settings.voice.jarvis.wakeWord.statusOn": 'Em escuta passiva aguardando "Jarvis"',
+  "settings.voice.jarvis.wakeWord.statusPaused": "Pausado enquanto a conversa por voz ou ditado usa o microfone",
+  "settings.voice.jarvis.wakeWord.statusError": "Erro no microfone: {error}",
 } as const satisfies PartialTranslation<typeof source>;

@@ -1,6 +1,7 @@
 // @vitest-environment node
 
 import {
+  DEFAULT_JARVIS_SHORTCUT_SETTINGS,
   DEFAULT_SPEECH_SETTINGS,
   type DraftAttachment,
   type SpeechModelStatus,
@@ -14,6 +15,7 @@ import { describe, expect, it, vi } from "vitest";
 import { agentRequest } from "./agent-inputs";
 import { eventPayloadHandler, handler, payloadHandler, registerIpcGroup } from "./define-ipc-group";
 import {
+  parseJarvisShortcutSettings,
   parseSpeechApiKey,
   parseSpeechInput,
   parseSpeechSettings,
@@ -104,6 +106,8 @@ function registerVoice(
     setServer: payloadHandler(parseVoiceServerSave, () => null),
     startLive: payloadHandler(agentRequest(parseVoiceLiveStart), () => ({ sessionId: "live-1", sdp: "answer" })),
     stopLive: payloadHandler(parseVoiceLiveStop, () => undefined),
+    getMaestroShortcut: handler(() => DEFAULT_JARVIS_SHORTCUT_SETTINGS),
+    setMaestroShortcut: payloadHandler(parseJarvisShortcutSettings, (settings) => settings),
   });
 }
 

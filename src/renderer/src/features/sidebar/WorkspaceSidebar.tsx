@@ -36,6 +36,7 @@ import { SidebarUpdateIsland } from "../updates/SidebarUpdateIsland";
 import { createCommunityCardVisibility } from "./community-card";
 import { DevWorktreeLabel } from "./DevWorktreeLabel";
 import { createSidebarAlertCards, SidebarAlertCards } from "./SidebarAlertCards";
+import { SidebarJarvisCore } from "./SidebarJarvisCore";
 import { ServerUpgradeOffer } from "./server-upgrade-offer";
 import { useSidebar } from "./sidebar-context";
 
@@ -103,7 +104,7 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
   // The host refuses a member: an agent is hidden for every member.
   const hideAllowed = () =>
     activeServerSupportsCapability(AGENT_HIDDEN_CAPABILITY) && serverRoleCanAdminister(activeServer());
-  const { pendingPrompts, approvals } = useTurns();
+  const { pendingPrompts, approvals, failedTurns } = useTurns();
   const { agentUnreadReplies, markAgentChatRead, markAgentChatUnread, markAllAgentMessagesRead } = useConversation();
   const { directPeople, teamPresence } = usePresence();
   const { activeDirectMember, activeDirectMemberId, directThreads } = useDirectMessages();
@@ -353,6 +354,13 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
               />
             </Show>
             <SidebarUpdateIsland />
+            <SidebarJarvisCore
+              agents={agentList()}
+              agentStates={sidebarAgentStates()}
+              hasFailedTurn={Object.values(failedTurns()).some(Boolean)}
+              onSelectAgent={selectAgent}
+              onOpenSearch={() => setGlobalSearchVisibility(true)}
+            />
           </>
         }
         onOpenMarketplace={() => setSkillsMarketplaceOpen(true)}

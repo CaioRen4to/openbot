@@ -208,6 +208,8 @@
     "./features/conversation/routine-schedule-ui": "./src/features/conversation/routine-schedule-ui.ts",
     "./features/custom-providers/CustomProviderDialog": "./src/features/custom-providers/CustomProviderDialog.tsx",
     "./features/custom-providers/CustomProviderListDialog": "./src/features/custom-providers/CustomProviderListDialog.tsx",
+    "./features/jarvis/JarvisOrb": "./src/features/jarvis/JarvisOrb.tsx",
+    "./features/jarvis/jarvis-orb.css": "./src/features/jarvis/jarvis-orb.css",
     "./features/custom-providers/custom-provider-form": "./src/features/custom-providers/custom-provider-form.ts",
     "./features/custom-providers/CustomAcpAgentDialog": "./src/features/custom-providers/CustomAcpAgentDialog.tsx",
     "./features/custom-providers/AcpRegistrySettings": "./src/features/custom-providers/AcpRegistrySettings.tsx",

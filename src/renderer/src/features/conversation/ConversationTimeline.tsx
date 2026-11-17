@@ -48,6 +48,7 @@ import { planItems, planTitle } from "../../app-message-projection";
 import { useChatBubbleStyle } from "../../chat-bubble-style-preference";
 import { useCompactMessageActions } from "../../compact-message-actions-preference";
 import { currentDevicePlatform } from "../../send-shortcut-preference";
+import { resolveOrbStatusWithAudio, useJarvisOrbAudio } from "../jarvis/jarvis-audio-signal";
 import { remoteRoutineRecovery, serverCanAdminister } from "../servers/server-capabilities";
 import { speechModelReady } from "../speech/speech-model";
 import { recordingGone, speechReading, spokenReply } from "../speech/speech-playback";
@@ -256,6 +257,7 @@ export function ConversationTimeline() {
     if (channel || !onMarkUnread || !isIncomingAgentMessage(message) || message.streaming) return;
     return () => void onMarkUnread(message.id);
   };
+  const orbAudio = useJarvisOrbAudio();
   /** The message that the delete dialog asks about. */
   const [deleteTargetId, setDeleteTargetId] = createSignal<string | null>(null);
   /** A message that the host stores can be deleted, when the reader may delete it. */
@@ -889,6 +891,8 @@ export function ConversationTimeline() {
                   agent={agent()}
                   samplePrompt={sampleRoutinePrompt()}
                   sampleSkillName={sampleSkillName()}
+                  orbStatus={resolveOrbStatusWithAudio("idle", orbAudio().mode)}
+                  orbAudioLevel={orbAudio().level}
                 />
               )}
             </Show>

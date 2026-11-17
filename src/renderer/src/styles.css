@@ -3,6 +3,7 @@
 @import "tailwindcss";
 @import "@openbot/brand/tokens.css";
 @import "@openbot/brand/tokens-light.css";
+@import "@openbot/brand/tokens-jarvis.css";
 @import "@openbot/brand/logo.css";
 @import "@openbot/ui/styles.css";
 @import "@openbot/ui/features/account/otp-input.css";
@@ -12,6 +13,7 @@
 @import "@openbot/ui/styles/action-menu.css";
 @import "@openbot/ui/features/dynamic-island/dynamic-island.css";
 @import "@openbot/ui/features/dynamic-island/dynamic-island-surface.css";
+@import "@openbot/ui/features/jarvis/jarvis-orb.css";
 @import "@openbot/ui/features/sidebar/sidebar-mobile-app.css";
 @import "./styles/base.css";
 @import "@openbot/ui/styles/sr-only.css";
@@ -103,6 +105,8 @@
 @import "@openbot/ui/skill-preview.css";
 /* After the page styles: the transparent window replaces their backgrounds. */
 @import "./styles/window-glass.css";
+/* J.A.R.V.I.S. tactical grid & glow over dark surfaces, before custom chat backgrounds. */
+@import "./styles/jarvis-theme.css";
 /* After the transparent window: the chat background replaces its canvas in conversations. */
 @import "./styles/chat-background.css";
 

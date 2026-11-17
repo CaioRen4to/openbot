@@ -816,3 +816,24 @@ export function isVoiceServerProbe(value: unknown): value is VoiceServerProbe {
     isNameList(models.voices)
   );
 }
+
+/** Global hotkey configuration that brings OpenBot to the foreground and activates Maestro voice mode. */
+export interface JarvisShortcutSettings {
+  enabled: boolean;
+  accelerator: string;
+}
+
+export const JARVIS_SHORTCUT_ACCELERATORS = ["Alt+J", "CommandOrControl+Shift+J", "Alt+Space"] as const;
+
+export const DEFAULT_JARVIS_SHORTCUT_SETTINGS: JarvisShortcutSettings = {
+  enabled: true,
+  accelerator: "Alt+J",
+};
+
+export interface JarvisMaestroTriggerEvent {
+  source: "shortcut";
+}
+
+export function isJarvisShortcutAccelerator(value: unknown): value is string {
+  return isBoundedString(value, 64) && value.trim().length > 0;
+}

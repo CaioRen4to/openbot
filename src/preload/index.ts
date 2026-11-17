@@ -192,6 +192,8 @@ import {
   decodeHostedSite,
   decodeHostedSiteList,
   decodeInstalledFonts,
+  decodeJarvisMaestroTriggerEvent,
+  decodeJarvisShortcutSettings,
   decodeLicenseState,
   decodeLinkAccountStatus,
   decodeMobileConnectedDevices,
@@ -994,6 +996,9 @@ const openbotApi: OpenBotDesktopApi = {
     startLive: decodeVoiceLiveSession,
     stopLive: decodeVoid,
     liveEvent: decodeVoiceLiveEvent,
+    getMaestroShortcut: decodeJarvisShortcutSettings,
+    setMaestroShortcut: decodeJarvisShortcutSettings,
+    maestroTriggered: decodeJarvisMaestroTriggerEvent,
   }),
   auth: bridgeGroup(IPC_ENDPOINTS.auth, {
     getState: decodeCentralAuthState,

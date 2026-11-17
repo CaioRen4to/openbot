@@ -1,10 +1,13 @@
 import {
   cloudSpeechModel,
+  DEFAULT_JARVIS_SHORTCUT_SETTINGS,
   DEFAULT_SPEECH_SETTINGS,
   DEFAULT_VOICE_SETTINGS,
   type DictationKeyProvider,
   ELEVENLABS_VOICE_MODEL_ID,
   isLocalVoiceModelId,
+  type JarvisMaestroTriggerEvent,
+  type JarvisShortcutSettings,
   type OpenBotDesktopApi,
   SPEECH_MODEL_ID,
   type SpeechKeyProvider,
@@ -86,6 +89,8 @@ export function createMockVoice(options: MockVoiceOptions, { emit, schedule }: M
     ? { modelId: SPEECH_MODEL_ID, phase: "ready", progress: 100, message: null }
     : { modelId: SPEECH_MODEL_ID, phase: "missing", progress: null, message: null };
   const speechListeners = new Set<Listener<SpeechModelStatus>>();
+  const maestroListeners = new Set<Listener<JarvisMaestroTriggerEvent>>();
+  let maestroShortcut: JarvisShortcutSettings = { ...DEFAULT_JARVIS_SHORTCUT_SETTINGS };
   let speechTransfer: { settle: (status: SpeechModelStatus) => void } | null = null;
   let server: VoiceServerSettings | null = clone(options.voiceServer ?? null);
   const serverListeners = new Set<Listener<VoiceServerSettings | null>>();
@@ -317,6 +322,15 @@ export function createMockVoice(options: MockVoiceOptions, { emit, schedule }: M
     onLiveEvent: (listener) => {
       liveListeners.add(listener);
       return () => liveListeners.delete(listener);
+    },
+    getMaestroShortcut: async () => clone(maestroShortcut),
+    setMaestroShortcut: async (next) => {
+      maestroShortcut = clone(next);
+      return clone(maestroShortcut);
+    },
+    onMaestroTriggered: (listener) => {
+      maestroListeners.add(listener);
+      return () => maestroListeners.delete(listener);
     },
   };
   return { voice };

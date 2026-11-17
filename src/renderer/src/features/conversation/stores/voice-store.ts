@@ -6,6 +6,7 @@ import { desktopAnalytics } from "../../../analytics";
 import { unlockCompletionSound } from "../../../completion-sound";
 import { playVoiceLimitStop, playVoiceLimitWarning } from "../../../voice-limit-sound";
 import { appendVoiceTranscript, encodePcm16, recordingToSamples, recordingToWav } from "../../../voice-recording";
+import { setJarvisMicAudio } from "../../jarvis/jarvis-audio-signal";
 import { forgetDictatedMessage, noteDictatedMessage, stopSpokenReply } from "../../speech/speech-replies";
 import { EMPTY_DRAFT } from "../composer-draft";
 import { composerDraftKey } from "../conversation-keys";
@@ -417,11 +418,13 @@ export function createVoiceStore(deps: VoiceStoreDeps) {
       shown += (level - shown) * (level > shown ? 0.7 : 0.45);
       levels = [...levels.slice(1), shown];
       deps.setVoiceLevels(levels);
+      setJarvisMicAudio("dictation", true, shown);
     }, VOICE_LEVEL_INTERVAL_MS);
     const meterContext = context;
     resources.voiceMeterStop = () => {
       clearInterval(timer);
       void meterContext.close();
+      setJarvisMicAudio("dictation", false);
       resources.voiceMeterStop = undefined;
     };
   }

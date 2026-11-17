@@ -90,6 +90,7 @@ import {
   isDetectedModelServer,
   isDiscoverModelsResult,
   isElevenLabsSpeechVoice,
+  isJarvisShortcutAccelerator,
   isPlanStartAfterMs,
   isProviderDetectionSettings,
   isRemoteDesktopSetupStatus,
@@ -103,6 +104,8 @@ import {
   isVoiceServerProbe,
   isVoiceServerSettings,
   isXaiSpeechVoice,
+  type JarvisMaestroTriggerEvent,
+  type JarvisShortcutSettings,
   type LinkAccountStatus,
   type MobileConnectedDevice,
   type MobileConnectLink,
@@ -586,6 +589,25 @@ export function decodeVoiceStream(value: unknown): VoiceStream {
 export function decodeVoiceStreamTranscript(value: unknown): VoiceStreamTranscript {
   const transcript = decodeRecord(value, "voice stream transcript");
   return { streamId: requiredString(transcript, "streamId"), text: requiredString(transcript, "text") };
+}
+
+export function decodeJarvisShortcutSettings(value: unknown): JarvisShortcutSettings {
+  const settings = decodeRecord(value, "jarvis shortcut settings");
+  if (!isJarvisShortcutAccelerator(settings.accelerator)) {
+    throw new Error("Invalid jarvis shortcut accelerator.");
+  }
+  return {
+    enabled: requiredBoolean(settings, "enabled"),
+    accelerator: settings.accelerator,
+  };
+}
+
+export function decodeJarvisMaestroTriggerEvent(value: unknown): JarvisMaestroTriggerEvent {
+  const event = decodeRecord(value, "jarvis maestro trigger event");
+  if (event.source !== "shortcut") {
+    throw new Error("Invalid jarvis maestro trigger source.");
+  }
+  return { source: "shortcut" };
 }
 
 export function decodeSpeechModelStatus(value: unknown): SpeechModelStatus {

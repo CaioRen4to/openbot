@@ -614,6 +614,8 @@ import type {
 } from "./ipc-team-host";
 import type { VaultImportResult, VaultSaveInput, VaultSecretRequest, VaultState, VaultTwoStepCodes } from "./ipc-vault";
 import type {
+  JarvisMaestroTriggerEvent,
+  JarvisShortcutSettings,
   SpeechApiKeyInput,
   SpeechAudio,
   SpeechInput,
@@ -1041,6 +1043,10 @@ export const IPC_ENDPOINTS = {
     /** Ends a live voice session. It does nothing when the session ended already. */
     stopLive: request<VoiceLiveStop, void>()("voice:stop-live"),
     liveEvent: event<VoiceLiveEvent>()("voice:live-event"),
+    /** Global desktop shortcut configuration that wakes OpenBot on the Maestro agent. */
+    getMaestroShortcut: request<undefined, JarvisShortcutSettings>()("voice:get-maestro-shortcut"),
+    setMaestroShortcut: request<JarvisShortcutSettings, JarvisShortcutSettings>()("voice:set-maestro-shortcut"),
+    maestroTriggered: event<JarvisMaestroTriggerEvent>()("voice:maestro-triggered"),
   },
   dynamicIsland: {
     getPreference: request<undefined, DynamicIslandPreference>()("dynamic-island:get-preference"),
