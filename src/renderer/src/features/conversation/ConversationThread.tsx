@@ -12,6 +12,7 @@ import { createEffect, createMemo, createProjection, createSignal, Show, untrack
 import { actionToast } from "../../action-toast";
 import { useShowAgentSteps } from "../../agent-steps-preference";
 import { toAgentMessages } from "../../app-message-projection";
+import { threadAwaitingReplies } from "../../awaiting-replies";
 import { useChatBubbleStyle } from "../../chat-bubble-style-preference";
 import { useCompactMessageActions } from "../../compact-message-actions-preference";
 import { usePlatform } from "../../platform";
@@ -27,6 +28,7 @@ import type { ConversationThreads } from "./conversation-types";
 import { useThreadMarketplaceSuggestionCard } from "./MarketplaceSuggestionChatCard";
 import { useThreadMcpSignInCard } from "./McpSignInChatCard";
 import { useMessageBackdropAction } from "./message-backdrop";
+import { useThreadSettingLinkCard } from "./SettingLinkChatCard";
 import { createTurnSteps } from "./turn-steps";
 
 /** The open side thread of the agent, in the place of the agent's own chat and its message box. */
@@ -71,6 +73,7 @@ export function ConversationThread() {
     copyMessage,
     copiedMessageId,
     branchThread,
+    changeMarkerActions,
   } = useConversationViewScope();
   const backdropAction = useMessageBackdropAction(conversationRuntime(props));
   const { t, errorMessage } = useText();
@@ -121,6 +124,7 @@ export function ConversationThread() {
       if (taskId && messageId && read) read(messageId);
     },
   );
+  const awaiting = createMemo(() => threadAwaitingReplies(props.threads?.open, props.agents, props.agentWaits));
   const view = () => {
     const agent = props.agent;
     const threads = props.threads;
@@ -231,6 +235,7 @@ export function ConversationThread() {
     (body) => props.threads?.onSend(body, [], null) ?? Promise.resolve(false),
   );
   const marketplaceCard = useThreadMarketplaceSuggestionCard();
+  const settingLinkCard = useThreadSettingLinkCard();
   /** A visual reply page shows as in the agent's chat, and writes in this thread's message box. */
   const visualReplyCard = useThreadVisualReplyCard(threadComposer.openDraftKey, requestThreadFocus);
   /** The cards that the thread waits for: its browser takeover, and its question as a form. */
@@ -310,6 +315,7 @@ export function ConversationThread() {
             onStop={() => current().threads.onStop()}
             onOpenLink={(url) => void openExternalMessageUrl(url)}
             onSelectAgent={props.onSelectAgent}
+            changeMarkerActions={changeMarkerActions}
             onPreview={(attachment) => void previewAttachment(attachment)}
             onAttachmentAction={attachmentAction}
             mediaSource={props.runtime?.attachmentMedia}
@@ -324,7 +330,10 @@ export function ConversationThread() {
             waitsForAnswer={props.prompt !== undefined || props.browserTakeover !== undefined}
             attention={attention()}
             messageCard={(message, quote) =>
-              visualReplyCard(message, quote) ?? mcpSignInCard(message) ?? marketplaceCard(message)
+              visualReplyCard(message, quote) ??
+              mcpSignInCard(message) ??
+              marketplaceCard(message) ??
+              settingLinkCard(message)
             }
             olderMessages={current().threads.olderMessages}
             newerMessages={current().threads.newerMessages}
@@ -348,6 +357,7 @@ export function ConversationThread() {
             replyTo={replyTo()}
             onCancelReply={() => threadComposer.setReply(threadComposer.openDraftKey(), null)}
             queue={threadQueue.view(current().threads.open, threadComposer.openDraftKey())}
+            awaiting={awaiting()}
             selectionActions={selectionActions(current().threads)}
           />
         </>

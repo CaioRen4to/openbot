@@ -467,6 +467,35 @@ another model and any other value keep the model's own background. The capabilit
 client shows the Background chip only on a host that advertises it, because an older host ignores
 the field.
 
+`workflows-media-size-v1` lets an image step have a size of its own. With `aspect` set to `custom`,
+the node reads two more fields, `width` and `height`: whole pixels from 64 to 4096. The host asks the
+model for the nearest aspect ratio it makes, at the smallest resolution that is at least the longer
+side (else the largest). When the file is made, the host crops its centre to the shape of the size and
+scales it to exactly `width` × `height` as a PNG, then deletes the model's file. When the host cannot
+decode the file (Electron decodes PNG and JPEG, not WebP), the step keeps the model's file. A video
+and a side out of range keep the model's size. The capability adds no route. A client shows Custom
+in the aspect ratio menu only on a host that advertises it, because an older host reads `custom` as
+the model's first aspect ratio. The same capability adds the aspect ratios `4:5` and `5:4` for an
+image: the host asks the model for that ratio, and a client offers them only on a host that
+advertises the capability, for the same reason. A video model without its own list of aspect ratios
+does not make them.
+
+`workflows-media-catalog-v1` shows all the models of Sunra and Higgsfield that the canvas can run, not
+only the models of `WORKFLOW_MEDIA_MODELS`. The host reads Sunra's `list_models` and Higgsfield's
+`models_explore` with the sign-ins of its Apps, and keeps each list for ten minutes
+(`src/backend/workflows/media-catalog.ts`). It drops the models that need a source video and the
+models that are only tools. For each model, the host keeps a plan that stays on the host: which input
+pictures it sends and how it names the choices (`sunra-catalog.ts`, `higgsfield-catalog.ts`). A
+service that does not answer gives its fixed models. `POST /v1/workflows/media/catalog {}` answers
+`{ models }`. `POST /v1/workflows/media/price` takes the model and the choices of a step and answers
+`{ credits }`: the price of one file, from Higgsfield's `get_cost` or Sunra's `estimate_cost`. Both
+only quote: they start no job and spend no credits, and the quote sends no picture. Sunra quotes a
+Personal account only, so a Sunra Team sign-in gets null. The host keeps a quote for ten minutes.
+Each member who can use workflows can call both routes. A step keeps its `model` field; a model id of
+the live list has the same `sunra-` or `higgsfield-` form as a fixed id. A client of a host without
+the capability shows the fixed models and no price. The Run button of an image step shows the price,
+and the page rail shows the number of credits under the logo when the account has no quota.
+
 The optional event `workflows-changed { workflowId }` names the workflow that changed, so the
 client reads it again. A client without the capability shows `serverTooOld` on the Workflows page.
 
@@ -571,6 +600,15 @@ app shows the countdown with it. The desktop transports do not copy it yet.
 the item and the last four digits of a card; it never holds a secret value. The mobile app shows the
 Vault card with it and answers through the released prompt route. A client without it gets the form
 as questions. The desktop transports do not copy it yet.
+
+`ui-block-preview-edit-v1` (`team-protocol/ui-block-preview-edit-v1.ts`, protocol 9 only) adds
+nothing to the wire of a block. A host with it reads one more key, `_preview`
+(`UI_CONFIRM_PREVIEW_ANSWER_ID`), beside the answers of a confirm that has a preview: the text that
+the person edited in the card after they pressed the `edit_preview` button. The host gives the text
+to the agent as `preview` and stores it as the block's preview and in its fallback question and text,
+so the closed card shows what the agent got; the stored resolution leaves the key out. A host without it refuses the key, so the desktop, the
+web client and the mobile app open the editor only on a host that advertises it. Elsewhere the
+`edit_preview` button answers as any other button, and the agent asks what to change.
 
 ### Subagents
 
@@ -714,9 +752,11 @@ on this computer and has no "I'm done" button. A sign-in that sets cookies compl
 that tab.
 The window also sends by itself (`src/main/browser-sign-in-page.ts`): after a page with a sign-in
 address or a visible password field, a new `HttpOnly` cookie of the site, and then a page of the site
-that is not a sign-in step. This is a guess, so after that send the desktop reads the server's tab
-list. When the tab still shows a sign-in step, it opens the window's page in the tab (with
-`browser-navigation`) and reads the list again. The window closes only when the tab left the sign-in
+that is not a sign-in step. For the pages only, the site also includes the other subdomains of the
+same registrable domain (`tldts`, private suffixes kept apart), because some sites sign in on one
+subdomain and then show the page on another (#11219). The cookies and the page storage keep the
+scope above. This is a guess, so after that send the desktop reads the server's tab list. When the
+tab still shows a sign-in step, it opens the window's page in the tab (with `browser-navigation`) and reads the list again. The window closes only when the tab left the sign-in
 steps; otherwise it stays open and waits for the next cookie. Done sends without this check.
 The desktop discards the window's session after a send that set cookies, on Cancel, and at shutdown.
 A failed send keeps it, so Done can try again. The web client has no menu item: a web page cannot
@@ -820,7 +860,7 @@ Each capability has a frozen codec in `team-protocol/<name>-v1.ts`, registered i
 `team-protocol/optional-routes.ts`, and both transports use it. Every route calls `requireAdmin`,
 except those that also answer a member: `/v1/browser/tab-profiles`, `storage-disk-v1`, `storage-user-files-v1`,
 `storage-channel-v1`, `library-folders-v1`, `agent-fast-mode-v1`, `agent-speed-v1`,
-`model-steering-v1` and `usage-credits-v1`. The
+`model-steering-v1`, `provider-model-source-v1` and `usage-credits-v1`. The
 host advertises a capability only when its `TeamApiAdmin` member exists.
 
 | Capability | Grants | IPC group |
@@ -872,6 +912,7 @@ host advertises a capability only when its `TeamApiAdmin` member exists.
 | `browsing-memory-v1` | Read and set whether the host records what a person does in an agent's browser tab that they hold, for the memory review of that agent. Protocol 9 only | `hostAdmin` |
 | `browser-teach-v1` | Start and stop the recording of a task that a member shows in an agent's browser tab. The steps go only to the session that started it. Protocol 9 only | none: each member, for a tab they can see |
 | `skill-learning-v1` | Read and set whether the memory reviews of the host's agents save the skills they learn, ask first, or do not look for skills. Sends the skill name of a skill question in chat messages, and saves that skill on Save (any member with chat level). Protocol 9 only | `hostAdmin`, `agent.saveSkillSuggestion` |
+| `feedback-withdraw-v1` | Remove on a feedback thank-you card in an agent's own chat (the owner only, who approves each report). The host takes the report off GitHub with its own OpenBot account, which sent it, and changes the card for every member. Protocol 9 only | `agent.withdrawFeedback` |
 | `agent-notification-levels-v1` | Read and set the member's own notification level of the server and of each agent | none: each member, own levels only |
 | `sidebar-pins-v1` | Read, replace and seed the member's own ordered list of pinned agents and channels | none: each member, own pins only |
 | `live-voice-v1` | Start and stop Codex live voice with an agent, with the host's Codex sign-in; the `live-voice` event goes to the member who started it. Protocol 9 only | none: each member who can chat with the agent |
@@ -882,6 +923,7 @@ host advertises a capability only when its `TeamApiAdmin` member exists.
 | `provider-account-models-v1` | Read the models that each account after the first of the host's providers serves and the provider's own sign-in does not, for the model picker of that account. Protocol 9 only | `hostAdmin` |
 | `model-visibility-v1` | Read every model of one provider of the host, and set which of them the model picker shows. Every member reads which models the picker folds under Older models or labels New. Protocol 9 only | `hostAdmin` |
 | `model-steering-v1` | Every member reads which models of a provider that reports steering for each agent (a custom ACP agent) take a message into the running turn. A model that is not listed does not steer: the client shows "Send now" for it, and the host queues the message. Protocol 9 only | `hostAdmin` |
+| `provider-model-source-v1` | Every member reads, for each provider of the host whose own settings give its models from another source, which source that is: a model provider by its name, such as Ollama, or a model list file. No path, address or key. Today only Codex reports one. The model picker shows it on that provider's tab. Protocol 9 only | `agent` (merged into the status) |
 | `provider-default-v1` | Read and set the provider that a new agent of the host starts on | none: only the mobile app sends it |
 | `agent-access-v1` | Read and set the roles that give members access to agents (see [Roles](#roles)) | `hostAdmin` |
 | `server-audit-v1` | Read the changes to the members, roles and agent access of the server (see [Audit log](#audit-log)). Protocol 9 only | `hostAdmin` |
@@ -936,6 +978,10 @@ automatic, the system zone of the host). When an agent creates a routine, the zo
 call first, then from the sender's last message in that turn, then from this setting. The sender's
 zone stays in memory only, so after a restart a queued message uses the server timezone. Agent import
 and instance transfer use it in place of the system zone. A change does not move existing routines.
+On a server, main sets `TZ` to the chosen zone before the app is ready (`applyServerTimezone`),
+because Chromium reads the zone of its pages only when a renderer starts: the agent browser, the
+agent processes and main use it after the next restart (#8935). "Automatic" still shows and uses the
+zone of the computer from before that change.
 
 `host-turn-limits-v1` reads and sets the turn limits of the host (`openbot-host-turn-limits-v1.json`).
 `turnLimit` is the most turns that run at the same time on the host; `null` is automatic: 2, 8 or 16 by
@@ -1394,6 +1440,43 @@ creates them and the Customer Portal settings.
   checks that it is a `billing.stripe.com` page, and opens it with `shell.openExternal`. The IPC takes
   no URL. The web client does the same check before `location.assign`. Checkout URLs get the same
   check for `checkout.stripe.com` (`isStripeCheckoutUrl`).
+- VAT does not use Stripe Tax. The seller is in Poland and is not in the EU One Stop Shop
+  (`apps/auth-api/src/server/billing-tax.ts`). Before a server or license Checkout, the client saves
+  the billing country and an optional EU VAT ID with `GET`/`PUT /v1/me/billing/details` (desktop IPC
+  `billing:get-details`/`billing:set-details`, shared form `BillingDetailsFields`). The Worker keeps
+  them on the Stripe customer: the address country, an `eu_vat` tax ID and `tax_exempt`. While no
+  country is saved, the `GET` adds `suggestedCountry`, the Cloudflare `CF-IPCountry` of the request
+  (not `XX` or `T1`). The form starts on it; only the country that the buyer sends is saved.
+  - A buyer in Poland, and a buyer in another EU country with no valid VAT ID, pay Polish VAT: the
+    Checkout and the license split subscription get the `default_tax_rates` of the Tax Rate with the
+    metadata `openbot_vat=pl_standard` (`VAT_TAX_RATE`, made by `api:stripe:bootstrap`).
+  - A VAT ID of another EU country gets reverse charge (`tax_exempt=reverse`, no Tax Rate) only after
+    the EU VIES REST service confirms it. An unknown ID returns 400 `vat_id_invalid`; no answer from
+    VIES returns 503 `vat_id_unverified`, and nothing changes. The optional setting
+    `VIES_REQUESTER_VAT_ID` (the seller's VAT ID) makes VIES return a consultation number, which the
+    customer metadata `openbot_vies_request` keeps as proof.
+  - A buyer outside the EU (also the UK, Norway and Switzerland) pays no VAT.
+  - A `PUT` of new details also sets the Tax Rate of each open subscription with the metadata
+    `openbot_vat_treatment`, so that the next invoice of a plan that runs gets the new VAT. Checkout,
+    the license split and `scripts/stripe-vat-migrate.ts` write that metadata. A plan from before VAT
+    has none and keeps its tax. The buyer declares the new country with no proof, so each subscription
+    whose VAT treatment changes writes a log line and sends a [pool alert](../hosted-servers.md#pool-alerts)
+    with the customer, the subscription and the two countries.
+  - A customer with no country (a client from before this step) gets a Checkout with Stripe Tax
+    (`automatic_tax`, tax ID collection) and no VAT metadata, as before. With the Worker setting
+    `BILLING_COUNTRY_REQUIRED=true` it gets 409 `billing_country_required` and must update. Production
+    sets it in `wrangler.jsonc` since desktop 0.72.0; run `scripts/stripe-vat-migrate.ts` once more
+    after the deploy, for plans that older clients bought with Stripe Tax before it. Checkout requires the billing address; when its country differs from the saved
+    one, the webhook writes a log line and sends a [pool alert](../hosted-servers.md#pool-alerts)
+    with the Checkout session ID and the two countries.
+  - Consumers in other EU countries pay Polish VAT only below the EU limit of EUR 10,000 a year.
+    `BillingOss` (`apps/auth-api/src/server/billing-oss.ts`) keeps the net euro amount of each paid
+    invoice of such a consumer in D1 (`billing_vat_oss_sales`) and sends one pool alert for a year at
+    EUR 9,000 (`billing_vat_oss_alerts`). It converts other currencies with the ECB rates of
+    `BillingUsd`. Refunds do not lower the total.
+  - `scripts/stripe-vat-migrate.ts` (a dry run by default; `--apply`, `--live`) moves the existing
+    subscriptions from Stripe Tax to the Tax Rate. A customer with no country, or in another EU
+    country with an EU VAT ID that no check confirmed, keeps Stripe Tax and is named for a manual check.
 - The change and cancel actions open the Portal flow of one subscription. The Worker first checks
   that the subscription belongs to the account.
 - The server name comes only from a `remote_hosts` row that the same account owns. A plan whose

@@ -34,6 +34,7 @@ import { AGENT_THREAD_PAGES_CODECS } from "./agent-thread-pages-v1";
 import { AGENT_THREAD_QUEUE_CODECS } from "./agent-thread-queue-v1";
 import { AGENT_THREAD_READS_CODECS } from "./agent-thread-reads-v1";
 import { AGENT_THREAD_REPLIES_CODECS } from "./agent-thread-replies-v1";
+import { AGENT_THREAD_REQUESTS_CODECS } from "./agent-thread-requests-v1";
 import { AGENT_THREADS_CODECS } from "./agent-threads-v1";
 import { AGENT_UPDATE_CODECS } from "./agent-update-v1";
 import { AGENT_USAGE_LIMIT_CODECS } from "./agent-usage-limit-v1";
@@ -66,6 +67,7 @@ import { CUSTOM_PROVIDER_HARNESS_CHOICE_CODECS } from "./custom-provider-harness
 import { CUSTOM_PROVIDER_HARNESS_CODECS } from "./custom-provider-harness-v1";
 import { DISCORD_ACCESS_CODECS } from "./discord-access-v1";
 import { EVENTS_CODECS } from "./events-v1";
+import { FEEDBACK_WITHDRAW_CODECS } from "./feedback-withdraw-v1";
 import { FOCUS_USE_CODECS } from "./focus-use-v1";
 import { GITHUB_SKILLS_CODECS } from "./github-skills-v1";
 import { HERMES_IMPORT_CODECS } from "./hermes-import-v1";
@@ -112,6 +114,7 @@ import { PROVIDER_DEFAULT_CODECS } from "./provider-default-v1";
 import { PROVIDER_DETECTION_CODECS } from "./provider-detection-v1";
 import { PROVIDER_ENVIRONMENT_CODECS } from "./provider-environment-v1";
 import { PROVIDER_HOST_SIGN_IN_CODECS } from "./provider-host-sign-in-v1";
+import { PROVIDER_MODEL_SOURCE_CODECS } from "./provider-model-source-v1";
 import { PROVIDER_SIGN_OUT_CODECS } from "./provider-sign-out-v1";
 import { PROVIDER_USAGE_RESET_CODECS } from "./provider-usage-reset-v1";
 import { PROVIDER_USE_CODECS } from "./provider-use-v1";
@@ -126,6 +129,7 @@ import { ANDROID_PUSH_NOTIFICATIONS_CODECS } from "./push-notifications-android-
 import { PUSH_NOTIFICATIONS_CODECS } from "./push-notifications-v1";
 import { ROUTINE_FLOW_STOP_CODECS } from "./routine-flow-stop-v1";
 import { ROUTINE_FLOWS_CODECS } from "./routine-flows-v1";
+import { ROUTINE_PAUSE_REASONS_CODECS } from "./routine-pause-reasons-v1";
 import { ROUTINE_RECOVERY_CODECS } from "./routine-recovery-v1";
 import { ROUTINE_RESULTS_CODECS } from "./routine-results-v1";
 import { ROUTINE_RUN_COMMAND_CODECS } from "./routine-run-command-v1";
@@ -157,6 +161,7 @@ import { WHATSAPP_STATUS_REACTIONS_CODECS } from "./whatsapp-status-reactions-v1
 import { WHATSAPP_WORKING_MESSAGE_CODECS } from "./whatsapp-working-message-v1";
 import { WORKFLOWS_GITHUB_CODECS } from "./workflows-github-v1";
 import { WORKFLOWS_HIGGSFIELD_CODECS } from "./workflows-higgsfield-v1";
+import { WORKFLOWS_MEDIA_CATALOG_CODECS } from "./workflows-media-catalog-v1";
 import { WORKFLOWS_MEDIA_CODECS } from "./workflows-media-v1";
 import { WORKFLOWS_SUNRA_CODECS } from "./workflows-sunra-v1";
 import { WORKFLOWS_CODECS } from "./workflows-v1";
@@ -180,6 +185,7 @@ const CODECS: ReadonlyMap<string, OptionalRouteCodec> = new Map([
   ...CUSTOM_PROVIDER_HARNESS_CODECS,
   ...CUSTOM_PROVIDER_EDIT_CODECS,
   ...CUSTOM_PROVIDER_HARNESS_CHOICE_CODECS,
+  ...FEEDBACK_WITHDRAW_CODECS,
   ...CUSTOM_AGENTS_CODECS,
   ...AGENT_SESSION_SETTINGS_CODECS,
   ...ACP_REGISTRY_CODECS,
@@ -196,6 +202,7 @@ const CODECS: ReadonlyMap<string, OptionalRouteCodec> = new Map([
   ...BROWSING_MEMORY_CODECS,
   ...PROMPT_CACHE_TTL_CODECS,
   ...MODEL_STEERING_CODECS,
+  ...PROVIDER_MODEL_SOURCE_CODECS,
   ...MODEL_VISIBILITY_CODECS,
   ...SERVER_AUDIT_CODECS,
   ...PROVIDER_DEFAULT_CODECS,
@@ -248,6 +255,7 @@ const CODECS: ReadonlyMap<string, OptionalRouteCodec> = new Map([
   ...PROVIDER_ACCOUNT_CODE_CODECS,
   ...GITHUB_SKILLS_CODECS,
   ...AGENT_THREAD_QUEUE_CODECS,
+  ...AGENT_THREAD_REQUESTS_CODECS,
   ...AGENT_USAGE_LIMIT_CODECS,
   ...AGENT_PENDING_RUNTIME_CODECS,
   ...HERMES_IMPORT_CODECS,
@@ -261,6 +269,7 @@ const CODECS: ReadonlyMap<string, OptionalRouteCodec> = new Map([
   ...ROUTINE_FLOW_STOP_CODECS,
   ...ROUTINE_RECOVERY_CODECS,
   ...ROUTINE_RUN_PLACE_CODECS,
+  ...ROUTINE_PAUSE_REASONS_CODECS,
   ...ROUTINE_RESULTS_CODECS,
   ...WEBHOOK_TESTS_CODECS,
   ...WEBHOOK_SENDER_SECRET_CODECS,
@@ -314,6 +323,7 @@ const CODECS: ReadonlyMap<string, OptionalRouteCodec> = new Map([
   ...WORKFLOWS_MEDIA_CODECS,
   ...WORKFLOWS_SUNRA_CODECS,
   ...WORKFLOWS_HIGGSFIELD_CODECS,
+  ...WORKFLOWS_MEDIA_CATALOG_CODECS,
   ...SIDEBAR_FOLDERS_CODECS,
   ...LIBRARY_FOLDERS_CODECS,
   ...VAULT_CODECS,

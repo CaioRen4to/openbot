@@ -29,6 +29,7 @@ import {
   SIDEBAR_FOLDERS_ROUTES,
 } from "@openbot/contracts/team-protocol/sidebar-folders-v1";
 import { SIDEBAR_PINS_CAPABILITY, SIDEBAR_PINS_ROUTES } from "@openbot/contracts/team-protocol/sidebar-pins-v1";
+import { WORKSPACE_ONLY_PROCESS_LIMIT_CAPABILITY } from "@openbot/contracts/team-protocol/workspace-only-process-limit-v1";
 // An agent's core surface: status, agents, conversations, the queue and the prompts
 // a turn can raise. Memories, routines and attachments are their own registrars.
 // Every one of these routes to the local service or to a remote server by the
@@ -77,6 +78,7 @@ import {
   withModelListings,
   withSteeringModels,
   withUsageCredits,
+  withWorkspaceOnlyLimit,
 } from "@openbot/contracts/ipc";
 import { isDynamicRecord } from "@openbot/contracts/runtime-values";
 import { TEAM_API_ROUTES } from "@openbot/contracts/team-api-routes";
@@ -111,6 +113,11 @@ import {
   AGENT_THREAD_REPLIES_CAPABILITY,
   AGENT_THREAD_REPLIES_ROUTES,
 } from "@openbot/contracts/team-protocol/agent-thread-replies-v1";
+import {
+  AGENT_THREAD_REQUESTS_CAPABILITY,
+  AGENT_THREAD_REQUESTS_ROUTES,
+  withAgentThreadRequests,
+} from "@openbot/contracts/team-protocol/agent-thread-requests-v1";
 import { AGENT_THREADS_CAPABILITY, AGENT_THREADS_ROUTES } from "@openbot/contracts/team-protocol/agent-threads-v1";
 import {
   AGENT_USAGE_LIMIT_CAPABILITY,
@@ -137,6 +144,11 @@ import {
   CONVERSATION_UNREAD_FROM_CAPABILITY,
   CONVERSATION_UNREAD_FROM_ROUTE,
 } from "@openbot/contracts/team-protocol/conversation-unread-from-v1";
+import {
+  decodeFeedbackWithdrawResult,
+  FEEDBACK_WITHDRAW_CAPABILITY,
+  FEEDBACK_WITHDRAW_ROUTES,
+} from "@openbot/contracts/team-protocol/feedback-withdraw-v1";
 import { MESSAGE_DELETE_CAPABILITY, MESSAGE_DELETE_ROUTES } from "@openbot/contracts/team-protocol/message-delete-v1";
 import {
   decodeMessagePinsResponse,
@@ -165,7 +177,9 @@ import { Effect } from "effect";
 import { duplicateAgentIntoLayout } from "../../backend/agent/duplication-gate";
 import type { AgentService } from "../../backend/agent-service";
 import { runCauseEffect } from "../../backend/effect-boundary";
+import { canConfineProcesses } from "../../backend/process-confinement";
 import type { SidebarLayoutStore } from "../../backend/sidebar-layout-store";
+import type { NotificationChat } from "../desktop-notifications";
 import type { HostService } from "../host-service";
 import type { LibraryFoldersService } from "../library-folders-service";
 import { runMessageDelete } from "../message-delete-refusal";
@@ -177,7 +191,6 @@ import {
   decodeAgentAnalyticsFromHost,
   decodeAgentModelOptions,
   decodeAgentSessionSettingsFromHost,
-  decodeAgentStatusFromHost,
   decodeAgentSummaries,
   decodeAgentSummary,
   decodeHiddenAgentsFromHost,
@@ -189,6 +202,7 @@ import {
   decodeRemoteAgentTasks,
   decodeRemoteAgentThreadBranches,
   decodeRemoteAgentThreadQueues,
+  decodeRemoteAgentThreadRequests,
   decodeRemoteTaskConversation,
   decodeRemoteTaskPage,
   decodeRemoteTaskReadState,
@@ -245,8 +259,10 @@ import {
   parseSteerQueuedMessage,
   parseUpdateAgent,
   parseUpdateQueuedMessage,
+  parseWithdrawFeedback,
 } from "./agent-inputs";
 import type { IpcGroupHandlers } from "./define-ipc-group";
+import { readRemoteAgentStatus } from "./remote-agent-status";
 import { scopedHandler, scopedQueryHandler } from "./scoped-handler";
 
 /** The fields of a move to another model at a usage limit. */
@@ -320,6 +336,8 @@ export interface AgentIpcDependencies {
   openExternal: (url: string) => Promise<void>;
   /** The models that the model picker shows. Only the local list is filtered here; a host filters its own. */
   modelVisibility: Pick<ModelVisibility, "picker">;
+  /** Closes the shown notifications of a chat that the user read while an app window has focus. */
+  closeChatNotifications: (serverId: string, chat: NotificationChat) => void;
 }
 
 export function agentIpcHandlers({
@@ -333,6 +351,7 @@ export function agentIpcHandlers({
   messageLinks,
   openExternal,
   modelVisibility,
+  closeChatNotifications,
 }: AgentIpcDependencies): Pick<IpcGroupHandlers, "agent"> {
   const remoteTaskRequest = <T>(serverId: string, path: string, decoder: ResponseDecoder<T>, body: RemoteTaskBody) => {
     if (!remoteServers.supportsCapability(serverId, AGENT_TASKS_CAPABILITY)) taskRemoteUnsupported();
@@ -427,8 +446,7 @@ export function agentIpcHandlers({
     agent: {
       getStatus: scopedQueryHandler({
         local: () => service.getStatus(),
-        remote: (serverId) =>
-          runCauseEffect(remoteServers.request(serverId, TEAM_API_ROUTES.agents.status, decodeAgentStatusFromHost)),
+        remote: (serverId) => runCauseEffect(readRemoteAgentStatus(remoteServers, serverId)),
       }),
       getRuntimeSnapshot: scopedQueryHandler({
         local: () => service.getRuntimeSnapshot(),
@@ -484,7 +502,11 @@ export function agentIpcHandlers({
         },
       }),
       listModels: scopedQueryHandler({
-        local: () => runCauseEffect(modelVisibility.picker(logRejectedModels(service.listModels(), "local"))),
+        local: async () =>
+          withWorkspaceOnlyLimit(
+            await runCauseEffect(modelVisibility.picker(logRejectedModels(service.listModels(), "local"))),
+            !canConfineProcesses(),
+          ),
         remote: (serverId) => {
           const models = remoteServers.request(serverId, TEAM_API_ROUTES.agents.models, (value) =>
             decodeAgentModelOptions(logRejectedModels(value, "remote")),
@@ -530,7 +552,10 @@ export function agentIpcHandlers({
               const [options, fastModels, listed, steered] = yield* Effect.all([models, fast, listings, steering], {
                 concurrency: "unbounded",
               });
-              return withSteeringModels(withModelListings(withFastServiceTiers(options, fastModels), listed), steered);
+              return withWorkspaceOnlyLimit(
+                withSteeringModels(withModelListings(withFastServiceTiers(options, fastModels), listed), steered),
+                remoteServers.supportsCapability(serverId, WORKSPACE_ONLY_PROCESS_LIMIT_CAPABILITY),
+              );
             }),
           );
         },
@@ -655,11 +680,16 @@ export function agentIpcHandlers({
           ),
       }),
       channelCommand: scopedHandler(parseChannelCommand, {
-        local: (input) => runCauseEffect(service.channels.command(input, host.channelActor())),
-        remote: (input, serverId) =>
-          runCauseEffect(
+        local: (input) => {
+          if (input.type === "read") closeChatNotifications(LOCAL_SERVER_ID, { channelId: input.channelId });
+          return runCauseEffect(service.channels.command(input, host.channelActor()));
+        },
+        remote: (input, serverId) => {
+          if (input.type === "read") closeChatNotifications(serverId, { channelId: input.channelId });
+          return runCauseEffect(
             remoteServers.request(serverId, CHANNEL_ROUTES.command, decodeChannel, { method: "POST", body: input }),
-          ),
+          );
+        },
       }),
       deleteChannel: scopedHandler(parseChannelId, {
         local: (channelId) => runCauseEffect(service.deleteChannel(channelId)),
@@ -1118,8 +1148,14 @@ export function agentIpcHandlers({
         remote: (serverId) => runCauseEffect(remoteServers.listAgentConversationReads(serverId)),
       }),
       markConversationRead: scopedHandler(parseMarkConversationRead, {
-        local: (parsed) => runCauseEffect(host.markAgentConversationRead(parsed)),
-        remote: (parsed, serverId) => runCauseEffect(remoteServers.markAgentConversationRead(parsed, serverId)),
+        local: (parsed) => {
+          closeChatNotifications(LOCAL_SERVER_ID, { agentId: parsed.agentId });
+          return runCauseEffect(host.markAgentConversationRead(parsed));
+        },
+        remote: (parsed, serverId) => {
+          closeChatNotifications(serverId, { agentId: parsed.agentId });
+          return runCauseEffect(remoteServers.markAgentConversationRead(parsed, serverId));
+        },
       }),
       markConversationUnread: scopedHandler(parseMarkConversationUnread, {
         local: (parsed) => runCauseEffect(host.markAgentConversationUnread(parsed)),
@@ -1150,6 +1186,21 @@ export function agentIpcHandlers({
                 taskId: input.taskId,
                 messageId: input.messageId,
               }),
+      }),
+      // The account of the host that sent the report removes it. An older host has no route, so its
+      // agent removes the report with `withdraw_feedback`; the card asks it in the composer.
+      withdrawFeedback: scopedHandler(parseWithdrawFeedback, {
+        local: (input) => runCauseEffect(service.withdrawFeedback(input)),
+        remote: (input, serverId) => {
+          if (!remoteServers.supportsCapability(serverId, FEEDBACK_WITHDRAW_CAPABILITY))
+            throw new Error(sourceText("error.backend.feedbackWithdrawRemoteUnsupported"));
+          return runCauseEffect(
+            remoteServers.request(serverId, FEEDBACK_WITHDRAW_ROUTES.withdraw, decodeFeedbackWithdrawResult, {
+              method: "POST",
+              body: { agentId: input.agentId, messageId: input.messageId },
+            }),
+          );
+        },
       }),
       sendMessage: scopedHandler(parseSendMessage, {
         local: (input) => runCauseEffect(service.sendMessage(input, host.conversationSender())),
@@ -1276,6 +1327,7 @@ export function agentIpcHandlers({
           const init = { method: "POST", body: { agentId } } as const;
           const branched = remoteServers.supportsCapability(serverId, AGENT_THREAD_BRANCHES_CAPABILITY);
           const queued = remoteServers.supportsCapability(serverId, AGENT_THREAD_QUEUE_CAPABILITY);
+          const requested = remoteServers.supportsCapability(serverId, AGENT_THREAD_REQUESTS_CAPABILITY);
           return runCauseEffect(
             Effect.gen(function* () {
               let snapshot = yield* remoteServers.request(
@@ -1292,6 +1344,15 @@ export function agentIpcHandlers({
                   init,
                 );
                 snapshot = withAgentThreadBranches(snapshot, links.branches);
+              }
+              if (requested) {
+                const requests = yield* remoteServers.request(
+                  serverId,
+                  AGENT_THREAD_REQUESTS_ROUTES.list,
+                  decodeRemoteAgentThreadRequests,
+                  init,
+                );
+                snapshot = withAgentThreadRequests(snapshot, requests);
               }
               if (!queued) return snapshot;
               const queues = yield* remoteServers.request(

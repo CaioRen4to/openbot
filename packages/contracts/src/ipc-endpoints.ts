@@ -33,6 +33,7 @@ import type { AppInterfaceSizePreference, SetAppInterfaceSizePreferenceInput } f
 import type { AppLanguagePreference, SetAppLanguagePreferenceInput } from "./app-language";
 import type { AppLogoColorPreference, SetAppLogoColorPreferenceInput } from "./app-logo-color";
 import type { BillingPortalRequest, BillingState, BillingStorageRequest } from "./billing";
+import type { BillingDetails, BillingDetailsRequest } from "./billing-details";
 import type {
   CreateHostedServerInput,
   DeleteHostedServerInput,
@@ -310,6 +311,8 @@ import type {
   SearchConversationMessagesInput,
   SendMessageInput,
   SetMessageReactionInput,
+  WithdrawFeedbackInput,
+  WithdrawFeedbackResult,
 } from "./ipc-conversations";
 import type {
   CrmActivityPage,
@@ -343,6 +346,7 @@ import type {
   UpdateCustomProviderInput,
 } from "./ipc-custom-providers";
 import type {
+  BrowserTakeoverPage,
   DynamicIslandAction,
   DynamicIslandGeometry,
   DynamicIslandPreference,
@@ -395,6 +399,7 @@ import type {
   InstanceTransferPreview,
   InstanceTransferResult,
   InstanceTransferSummary,
+  InstanceTransferUploadProgress,
 } from "./ipc-instance-transfer";
 import type { LibraryFolderAction, LibraryFoldersSnapshot } from "./ipc-library-folders";
 import type { LinkAccountStatus } from "./ipc-link-account";
@@ -656,7 +661,10 @@ import type {
   StartWorkflowRunInput,
   WorkflowDetail,
   WorkflowGraph,
+  WorkflowMediaCatalog,
   WorkflowMediaCredits,
+  WorkflowMediaPrice,
+  WorkflowMediaPriceRequest,
   WorkflowMediaProviders,
   WorkflowRunDetail,
   WorkflowRunPage,
@@ -1063,6 +1071,8 @@ export const IPC_ENDPOINTS = {
     performAction: request<DynamicIslandAction, void>()("dynamic-island:perform-action"),
     performHaptic: request<undefined, void>()("dynamic-island:perform-haptic"),
     action: event<DynamicIslandAction>()("dynamic-island:action"),
+    /** Only a chat window: it has no browser, so main brings up the main window on the takeover page. */
+    openBrowserTakeover: request<BrowserTakeoverPage, void>()("dynamic-island:open-browser-takeover"),
     setInteractive: request<SetDynamicIslandInteractiveInput, void>()("dynamic-island:set-interactive"),
     /** X11: the parts of the island window that take the pointer and show, as for the agent dock. */
     setInputRegion: request<AgentDockInputRect[], void>()("dynamic-island:set-input-region"),
@@ -1663,6 +1673,9 @@ export const IPC_ENDPOINTS = {
     getState: request<undefined, BillingState>()("billing:get-state"),
     openPortal: request<BillingPortalRequest, void>()("billing:open-portal"),
     buyStorage: request<BillingStorageRequest, BillingState>()("billing:buy-storage"),
+    // The billing country and EU VAT ID that decide the VAT of the next plan or license.
+    getDetails: request<undefined, BillingDetails>()("billing:get-details"),
+    setDetails: request<BillingDetailsRequest, BillingDetails>()("billing:set-details"),
   },
   // The commercial license of the account. Main opens the Checkout page; the renderer never sends a URL.
   license: {
@@ -1868,6 +1881,8 @@ export const IPC_ENDPOINTS = {
     deleteConversationMessage: scopedRequest<DeleteConversationMessageInput, void>()(
       "agent:delete-conversation-message",
     ),
+    // A joined server takes it through `feedback-withdraw-v1`, for its owner only.
+    withdrawFeedback: scopedRequest<WithdrawFeedbackInput, WithdrawFeedbackResult>()("agent:withdraw-feedback"),
     listQueue: scopedRequest<string, QueueSnapshot>()("agent:list-queue"),
     listWaits: scopedRequest<string, AgentWaitsSnapshot>()("agent:list-waits"),
     cancelWait: scopedRequest<CancelAgentWaitInput, void>()("agent:cancel-wait"),
@@ -2030,6 +2045,17 @@ export const IPC_ENDPOINTS = {
      * `workflows-sunra-v1`; an older one has none.
      */
     mediaCredits: scopedQuery<WorkflowMediaCredits>()("workflows:media-credits"),
+    /**
+     * The live models of the host's signed-in Sunra and Higgsfield accounts. A joined server answers
+     * through `workflows-media-catalog-v1`; an older one answers no models, and the client shows the
+     * fixed models of `WORKFLOW_MEDIA_MODELS`.
+     */
+    mediaCatalog: scopedQuery<WorkflowMediaCatalog>()("workflows:media-catalog"),
+    /**
+     * What one file of a catalog model costs with the choices of a step, as the service quotes it.
+     * A joined server answers through `workflows-media-catalog-v1`; an older one gives no quote.
+     */
+    mediaPrice: scopedRequest<WorkflowMediaPriceRequest, WorkflowMediaPrice>()("workflows:media-price"),
   },
   /**
    * CRM: leads and customers, their plans and payments, and the changes that agents propose. Only an
@@ -2391,6 +2417,8 @@ export const IPC_ENDPOINTS = {
     apply: scopedRequest<ApplyInstanceTransferInput, InstanceTransferResult, "required">()("instance-transfer:apply"),
     discard: scopedRequest<string, void, "required">()("instance-transfer:discard"),
     copy: scopedRequest<CopyInstanceAgentsInput, InstanceTransferResult, "required">()("instance-transfer:copy"),
+    // The bytes of a file that `choose` or `copy` sends to a joined server, while it sends them.
+    uploadProgress: event<InstanceTransferUploadProgress>()("instance-transfer:upload-progress"),
   },
   // The plugin deep link, its own group because its registrar holds the pending link rather than a
   // service. `takePendingListing` is what a window that finished loading after the link arrived

@@ -11,6 +11,7 @@ import {
   type AgentSummary,
   AnalyticsInputError,
   agentAccessRank,
+  CHANNEL_RESUME_ITEM_TYPE,
   type ChatColors,
   canAdministerServer,
   type DirectConversationPage,
@@ -24,6 +25,7 @@ import {
   isAgentEvent,
   isTeamRealtimeEvent,
   ROUTINE_QUIET_ANSWER_ITEM_TYPE,
+  SETTING_LINK_ITEM_TYPE_PREFIX,
   type SidebarLayoutSnapshot,
   type TeamMemberSummary,
   type TeamPresenceSnapshot,
@@ -57,6 +59,7 @@ import { AGENT_THREAD_PAGES_CAPABILITY } from "@openbot/contracts/team-protocol/
 import { AGENT_THREAD_QUEUE_CAPABILITY } from "@openbot/contracts/team-protocol/agent-thread-queue-v1";
 import { AGENT_THREAD_READS_CAPABILITY } from "@openbot/contracts/team-protocol/agent-thread-reads-v1";
 import { AGENT_THREAD_REPLIES_CAPABILITY } from "@openbot/contracts/team-protocol/agent-thread-replies-v1";
+import { AGENT_THREAD_REQUESTS_CAPABILITY } from "@openbot/contracts/team-protocol/agent-thread-requests-v1";
 import { AGENT_THREADS_CAPABILITY } from "@openbot/contracts/team-protocol/agent-threads-v1";
 import { BACKGROUND_PROCESSES_CAPABILITY } from "@openbot/contracts/team-protocol/background-processes-v1";
 import { BROWSER_EGRESS_CAPABILITY } from "@openbot/contracts/team-protocol/browser-egress-v1";
@@ -142,6 +145,7 @@ import {
   QUIET_TURN_CAPABILITY,
   ROUTINE_FLOW_STOP_CAPABILITY,
   ROUTINE_FLOWS_CAPABILITY,
+  ROUTINE_PAUSE_REASONS_CAPABILITY,
   ROUTINE_RECOVERY_CAPABILITY,
   ROUTINE_RESULTS_CAPABILITY,
   ROUTINE_RUN_PLACE_CAPABILITY,
@@ -182,6 +186,7 @@ import {
   WORKFLOWS_GITHUB_CAPABILITY,
   WORKFLOWS_HIGGSFIELD_CAPABILITY,
   WORKFLOWS_MEDIA_CAPABILITY,
+  WORKFLOWS_MEDIA_CATALOG_CAPABILITY,
   WORKFLOWS_SUNRA_CAPABILITY,
 } from "@openbot/contracts/team-protocol/current";
 import { CUSTOM_AGENTS_CAPABILITY } from "@openbot/contracts/team-protocol/custom-agents-v1";
@@ -206,6 +211,7 @@ import { teamHttpCodec } from "@openbot/contracts/team-protocol/http-codecs";
 import { LIBRARY_FOLDERS_EVENTS_CAPABILITY } from "@openbot/contracts/team-protocol/library-folders-events-v1";
 import { LIBRARY_FOLDERS_CAPABILITY } from "@openbot/contracts/team-protocol/library-folders-v1";
 import { LIVE_VOICE_CAPABILITY } from "@openbot/contracts/team-protocol/live-voice-v1";
+import { MAC_APPS_LIMIT_CAPABILITY } from "@openbot/contracts/team-protocol/mac-apps-limit-v1";
 import {
   MACHINE_RESOURCES_CAPABILITY,
   type MachineAlertEvent,
@@ -231,6 +237,7 @@ import {
 import { ROUTINE_RUN_COMMAND_CAPABILITY } from "@openbot/contracts/team-protocol/routine-run-command-v1";
 import { ROUTINES_ONCE_CAPABILITY } from "@openbot/contracts/team-protocol/routines-once-v1";
 import { SERVER_AUDIT_CAPABILITY } from "@openbot/contracts/team-protocol/server-audit-v1";
+import { SETTING_LINK_MARKERS_CAPABILITY } from "@openbot/contracts/team-protocol/setting-link-markers-v1";
 import { teamSideRouteCodec } from "@openbot/contracts/team-protocol/side-routes";
 import { SIDEBAR_FOLDERS_CAPABILITY, sidebarFoldersEvent } from "@openbot/contracts/team-protocol/sidebar-folders-v1";
 import { SIDEBAR_PINS_CAPABILITY } from "@openbot/contracts/team-protocol/sidebar-pins-v1";
@@ -269,6 +276,7 @@ import { encodeTeamProtocolV7BaseCurrentEvent } from "@openbot/contracts/team-pr
 import { TEAM_OPEN_PROVIDERS_CAPABILITY } from "@openbot/contracts/team-protocol/v8";
 import { encodeTeamProtocolV8BaseCurrentEvent } from "@openbot/contracts/team-protocol/v8-base-adapter";
 import { TEAM_PROTOCOL_V9 } from "@openbot/contracts/team-protocol/v9";
+import { WORKSPACE_ONLY_PROCESS_LIMIT_CAPABILITY } from "@openbot/contracts/team-protocol/workspace-only-process-limit-v1";
 import { isFixedSourceText, sourceText } from "@openbot/i18n/source";
 import { createOpenBotLogger, toLogValue } from "@openbot/logging";
 import { Deferred, Effect, Exit, Scope } from "effect";
@@ -277,6 +285,7 @@ import { AgentDuplicationFailed, duplicateAgentIntoLayout } from "../backend/age
 import { AgentMemorySelectionError } from "../backend/agent-memory-store";
 import { runCauseEffect } from "../backend/effect-boundary";
 import { McpServerError } from "../backend/mcp-server-store";
+import { canConfineProcesses } from "../backend/process-confinement";
 import { StoredStateFailure } from "../backend/stored-state-effects";
 import type { TeamChatStore } from "../backend/team-chat-store";
 import { agentAccessLevel } from "./agent-access-store";
@@ -335,6 +344,7 @@ import { routeAgentQueueTask } from "./team-api/route-agent-queue-task";
 import { routeAgentSessionSettings } from "./team-api/route-agent-session-settings";
 import { agentTasksWireSnapshot, routeAgentTasks } from "./team-api/route-agent-tasks";
 import { routeAgentThreadQueue } from "./team-api/route-agent-thread-queue";
+import { routeAgentThreadRequests } from "./team-api/route-agent-thread-requests";
 import {
   routeAgentThreadBranches,
   routeAgentThreadFiles,
@@ -368,6 +378,7 @@ import { routeCustomAgents } from "./team-api/route-custom-agents";
 import { routeDirect } from "./team-api/route-direct";
 import { routeDiscordAccess } from "./team-api/route-discord-access";
 import { routeEvents } from "./team-api/route-events";
+import { routeFeedbackWithdraw } from "./team-api/route-feedback-withdraw";
 import { routeFiles } from "./team-api/route-files";
 import { routeFocusUse } from "./team-api/route-focus-use";
 import { routeGithubSkills } from "./team-api/route-github-skills";
@@ -419,6 +430,7 @@ import { routeProviders } from "./team-api/route-providers";
 import { routePushNotifications } from "./team-api/route-push-notifications";
 import { routeRemoteScreen } from "./team-api/route-remote-screen";
 import { routeRoutineFlows } from "./team-api/route-routine-flows";
+import { routeRoutinePauseReasons } from "./team-api/route-routine-pause-reasons";
 import { routeRoutineResults } from "./team-api/route-routine-results";
 import { routeRoutineRunCommand } from "./team-api/route-routine-run-command";
 import { routeRoutineRunPlace } from "./team-api/route-routine-run-place";
@@ -1267,6 +1279,11 @@ export class TeamApiServer {
         "handled"
       )
         return;
+      if (
+        (await routeRoutinePauseReasons(context, this.#options.agents, this.#options.routineRunPlaces, hidden)) ===
+        "handled"
+      )
+        return;
       if ((await routeRoutinesOnce(context, this.#options.agents, this.#options.channels, hidden)) === "handled")
         return;
       if ((await routeAgentSessionSettings(context, this.#options.admin, hidden)) === "handled") return;
@@ -1304,6 +1321,7 @@ export class TeamApiServer {
       if ((await routeAgentQueueTask(context, this.#options.agentTasks, hidden)) === "handled") return;
       if ((await routeAgentThreadQueue(context, this.#options.agentTasks, this.#options.agents, hidden)) === "handled")
         return;
+      if ((await routeAgentThreadRequests(context, this.#options.agentTasks, hidden)) === "handled") return;
       if ((await routeAgentUsageLimit(context, this.#options.agents, hidden)) === "handled") return;
       if ((await routeAgentPendingRuntime(context, this.#options.agents, hidden)) === "handled") return;
       if ((await routeAgentThreads(context, this.#options.agentTasks, hidden)) === "handled") return;
@@ -1373,6 +1391,7 @@ export class TeamApiServer {
       if ((await routeThreadMessageSearch(context, this.#options.agents, hidden)) === "handled") return;
       if ((await routeSideQuestion(context, this.#options.agents, hidden)) === "handled") return;
       if ((await routeSkillSuggestionSave(context, this.#options.agents, hidden)) === "handled") return;
+      if ((await routeFeedbackWithdraw(context, this.#options.agents, hidden)) === "handled") return;
       if (
         (await routeLiveVoice(context, {
           liveVoice: this.#options.liveVoice,
@@ -1723,6 +1742,12 @@ export class TeamApiServer {
       return resolved;
     };
 
+    // A completed turn sends the runtime snapshot to some clients. It is read once for all of them.
+    let runtimeSnapshot = () => {
+      const snapshot = this.#options.agents.getRuntimeSnapshot();
+      runtimeSnapshot = () => snapshot;
+      return snapshot;
+    };
     for (const [client, connection] of this.#eventClients) {
       if (memberId !== undefined && connection.memberId !== memberId) continue;
       const event = this.#eventFor(connection, broadcast);
@@ -1864,11 +1889,15 @@ export class TeamApiServer {
           !connection.capabilities.has("hosted-site-event-markers") ||
           event.snapshot.messages.some(
             (message) =>
-              message.itemType === ROUTINE_QUIET_ANSWER_ITEM_TYPE || message.itemType === AGENT_WELCOME_ITEM_TYPE,
+              message.itemType === ROUTINE_QUIET_ANSWER_ITEM_TYPE ||
+              message.itemType === AGENT_WELCOME_ITEM_TYPE ||
+              message.itemType === CHANNEL_RESUME_ITEM_TYPE ||
+              (message.itemType?.startsWith(SETTING_LINK_ITEM_TYPE_PREFIX) === true &&
+                !connection.capabilities.has(SETTING_LINK_MARKERS_CAPABILITY)),
           ))
       ) {
         // The payloads are shared between clients, so the key holds what the roles allow too.
-        const key = `${blockedKey}:${eventProtocol(connection.capabilities)}:${connection.capabilities.has("opencode")}:${connection.capabilities.has("routine-event-markers")}:${connection.capabilities.has("routine-run-event-markers")}:${connection.capabilities.has("hosted-site-event-markers")}:${connection.capabilities.has(TEAM_PROMPT_MULTI_SELECT_CAPABILITY)}:${connection.capabilities.has(TEAM_UI_BLOCK_AUTO_ANSWER_CAPABILITY)}:${connection.capabilities.has(TEAM_UI_BLOCK_VAULT_CAPABILITY)}:${connection.capabilities.has(SKILL_LEARNING_CAPABILITY)}:${encodingOptions.preserveSemanticTags}`;
+        const key = `${blockedKey}:${eventProtocol(connection.capabilities)}:${connection.capabilities.has("opencode")}:${connection.capabilities.has("routine-event-markers")}:${connection.capabilities.has("routine-run-event-markers")}:${connection.capabilities.has("hosted-site-event-markers")}:${connection.capabilities.has(SETTING_LINK_MARKERS_CAPABILITY)}:${connection.capabilities.has(TEAM_PROMPT_MULTI_SELECT_CAPABILITY)}:${connection.capabilities.has(TEAM_UI_BLOCK_AUTO_ANSWER_CAPABILITY)}:${connection.capabilities.has(TEAM_UI_BLOCK_VAULT_CAPABILITY)}:${connection.capabilities.has(SKILL_LEARNING_CAPABILITY)}:${encodingOptions.preserveSemanticTags}`;
         let filtered = filteredConversationPayloads.get(key);
         if (!filtered) {
           filtered =
@@ -1899,7 +1928,7 @@ export class TeamApiServer {
         encodeEvent(
           {
             type: "runtime-snapshot",
-            snapshot: this.#options.agents.getRuntimeSnapshot(),
+            snapshot: runtimeSnapshot(),
           },
           encodingOptions,
         ) ?? undefined;
@@ -2674,6 +2703,7 @@ export class TeamApiServer {
           if (capability === AGENT_TASKS_CAPABILITY) return this.#options.agentTasks !== undefined;
           if (capability === AGENT_QUEUE_TASK_CAPABILITY) return this.#options.agentTasks !== undefined;
           if (capability === AGENT_THREAD_QUEUE_CAPABILITY) return this.#options.agentTasks !== undefined;
+          if (capability === AGENT_THREAD_REQUESTS_CAPABILITY) return this.#options.agentTasks !== undefined;
           if (capability === AGENT_THREADS_CAPABILITY) return this.#options.agentTasks !== undefined;
           if (capability === AGENT_TASK_UI_BLOCKS_CAPABILITY) return this.#options.agentTasks !== undefined;
           if (capability === AGENT_THREAD_READS_CAPABILITY) return this.#options.agentTasks !== undefined;
@@ -2690,6 +2720,10 @@ export class TeamApiServer {
           if (capability === AGENT_FAST_MODE_CAPABILITY) return this.#options.admin?.agentHost !== undefined;
           if (capability === AGENT_SPEED_CAPABILITY) return this.#options.admin?.agentHost !== undefined;
           if (capability === MODEL_STEERING_CAPABILITY) return this.#options.admin?.agentHost !== undefined;
+          // A limit, not a feature: only a host that refuses Workspace only for these providers has it.
+          if (capability === WORKSPACE_ONLY_PROCESS_LIMIT_CAPABILITY) return !canConfineProcesses();
+          // A limit too: a host that is not a Mac cannot run an app that drives Apple apps.
+          if (capability === MAC_APPS_LIMIT_CAPABILITY) return process.platform !== "darwin";
           if (
             capability === BROWSER_PROFILES_CAPABILITY ||
             capability === BROWSER_PROFILES_EVENTS_CAPABILITY ||
@@ -2760,6 +2794,7 @@ export class TeamApiServer {
           if (capability === ROUTINE_RUN_COMMAND_CAPABILITY)
             return this.#options.admin?.routineRunCommand !== undefined;
           if (capability === ROUTINE_RUN_PLACE_CAPABILITY) return this.#options.routineRunPlaces !== undefined;
+          if (capability === ROUTINE_PAUSE_REASONS_CAPABILITY) return this.#options.routineRunPlaces !== undefined;
           if (capability === WEBHOOK_TESTS_CAPABILITY) return this.#options.events !== undefined;
           if (capability === WEBHOOK_SENDER_SECRET_CAPABILITY) return this.#options.events !== undefined;
           if (capability === AGENT_IMPORT_CAPABILITY || capability === AGENT_IMPORT_V2_CAPABILITY)
@@ -2778,6 +2813,7 @@ export class TeamApiServer {
           if (capability === WORKFLOWS_MEDIA_CAPABILITY) return this.#options.workflows !== undefined;
           if (capability === WORKFLOWS_SUNRA_CAPABILITY) return this.#options.workflows !== undefined;
           if (capability === WORKFLOWS_HIGGSFIELD_CAPABILITY) return this.#options.workflows !== undefined;
+          if (capability === WORKFLOWS_MEDIA_CATALOG_CAPABILITY) return this.#options.workflows !== undefined;
           // The workflow store posts a chat-channel output into this host's channels.
           if (capability === WORKFLOWS_CHANNELS_CAPABILITY) return this.#options.workflows !== undefined;
           // The chats and workspaces of Telegram and Slack nodes come from the routine-results options.

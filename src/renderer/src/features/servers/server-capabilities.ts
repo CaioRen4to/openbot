@@ -53,6 +53,8 @@ export function serverSupportsCapability(
       capability === "whatsapp-connector-v1" ||
       capability === "vault-v1" ||
       capability === "crm-v1" ||
+      capability === "mac-apps-limit-v1" ||
+      capability === "ui-block-preview-edit-v1" ||
       capability === "vault-v2" ||
       capability === "vault-v3" ||
       capability === "browser-secret-vault-v1" ||
@@ -140,6 +142,7 @@ export function serverSupportsCapability(
       capability === "context-compact-v1" ||
       capability === "agent-instructions-v1" ||
       capability === "message-delete-v1" ||
+      capability === "feedback-withdraw-v1" ||
       capability === "message-pins-v1" ||
       capability === "chat-history-v1" ||
       capability === "conversation-unread-from-v1" ||

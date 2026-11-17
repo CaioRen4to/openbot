@@ -11,6 +11,7 @@ import {
   isVoiceLanguage,
   isVoiceModelId,
   isVoiceServerRoutes,
+  isVoiceTurnPause,
   isXaiSpeechVoice,
   type JarvisShortcutSettings,
   SPEECH_LIMITS,
@@ -146,9 +147,10 @@ export function parseSpeechSettings(input: unknown): SpeechSettings {
     !isXaiSpeechVoice(input.xaiVoice) ||
     !isSpeechSpeed(input.speed) ||
     typeof input.codexLive !== "boolean" ||
-    !(input.codexLiveVoice === null || isCodexLiveVoice(input.codexLiveVoice))
+    !(input.codexLiveVoice === null || isCodexLiveVoice(input.codexLiveVoice)) ||
+    !isVoiceTurnPause(input.turnPauseMs)
   ) {
-    throw new Error("Speech settings need a known model, voice and speed.");
+    throw new Error("Speech settings need a known model, voice, speed and pause.");
   }
   return {
     readReplies: input.readReplies,
@@ -159,6 +161,7 @@ export function parseSpeechSettings(input: unknown): SpeechSettings {
     speed: input.speed,
     codexLive: input.codexLive,
     codexLiveVoice: input.codexLiveVoice,
+    turnPauseMs: input.turnPauseMs,
   };
 }
 

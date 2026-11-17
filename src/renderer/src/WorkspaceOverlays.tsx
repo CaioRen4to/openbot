@@ -209,7 +209,7 @@ export function SkillsMarketplace() {
       marketplaceListing={pendingMarketplaceListing()}
       onMarketplaceListingConsumed={() => setPendingMarketplaceListing(null)}
       connectors={connectors.active}
-      macOS={platform.appInfo()?.platform === "darwin"}
+      macOS={platform.appInfo() ? platform.appInfo()?.platform === "darwin" : undefined}
       mcpToolRuntimeNote={mcpRuntimeNote()}
       mcpSignInRequest={pendingMcpSignIn()}
       onMcpSignInRequestHandled={() => setPendingMcpSignIn(null)}
@@ -354,6 +354,7 @@ function AddServer() {
       entryPoint={addServerEntryPoint() ?? undefined}
       calls={appPort().hostedServers}
       license={appPort().license}
+      billingDetails={appPort().billing}
       thisComputer
       pricingPage={windowPage.pricing}
       onOpenUrl={(url) => void appPort().openUrl(url)}

@@ -382,6 +382,7 @@ export function WorkspaceSidebar(props: { peopleEnabled: boolean }) {
       />
       {/* A compact sidebar hides the footer card, so the offer is outside the footer. */}
       <ServerUpgradeOffer
+        billing={appPort().billing}
         card={alertCards.storageCard.card()}
         server={activeServer()}
         blocked={serverSettingsOpen()}

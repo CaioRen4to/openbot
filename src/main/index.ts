@@ -32,6 +32,7 @@ import {
   shell,
   systemPreferences,
 } from "electron";
+import { localTimezone } from "../backend/agent/routine-tools";
 import { setDiskRestoreProbe } from "../backend/disk-restore";
 import { runCauseEffect } from "../backend/effect-boundary";
 import { NewerDatabaseError } from "../backend/openbot-database-schema";
@@ -150,6 +151,7 @@ import {
 import { ensureMacApplicationPresence, secondLaunchResponse } from "./main-window-state";
 import { MessageLinkRelay, openHttpLink } from "./message-link-relay";
 import { recoverFromNewerDatabase } from "./newer-database-recovery";
+import { removeOrcaPaneEnvironment } from "./orca-pane-environment";
 import { flushMainLog, startMainLog } from "./provider-log";
 import { notifyRemoteControlStarted } from "./remote-control-question";
 import { watchRemoteHostDirectory } from "./remote-server-host-directory";
@@ -159,6 +161,7 @@ import { RoutineWake } from "./routine-wake";
 import { RunMarker, type UncleanExitProperties } from "./run-marker";
 import { memberAuditName } from "./server-audit-store";
 import { takeServerModeEnvironment } from "./server-mode";
+import { applyServerTimezone, SERVER_TIMEZONE_PREFERENCE_FILE } from "./server-timezone-preference-store";
 import { configureContentSecurityPolicy, configureRendererPermissions } from "./session-configuration";
 import { OWNER_PIN_KEY } from "./sidebar-pin-store";
 import { StartAttempts, takeForcedStartFailure } from "./start-attempts";
@@ -172,6 +175,7 @@ import { macShipItDirectory, shipItInstallInProgress } from "./update-install-gu
 import { UPDATE_INSTALL_TIMEOUT_MS } from "./update-service";
 import { setInitialWindowGlass, setWindowAppearance } from "./window-appearance";
 import { placeWindowButtons } from "./window-buttons";
+import { restartOutsideWindowsPackage } from "./windows-package-restart";
 
 const logger = createOpenBotLogger("main");
 
@@ -261,6 +265,8 @@ const developmentRemoteRole =
 const developmentTestClientEnabled = !app.isPackaged && process.env.OPENBOT_DEV_TEST_CLIENT_ENABLED === "1";
 // Before any child process starts: agents must not run as part of a Claude Code session that started OpenBot.
 removeClaudeCodeSessionEnvironment(process.env);
+// Before any child process starts: agents must not report to the Orca pane that started OpenBot.
+removeOrcaPaneEnvironment(process.env);
 // Before any child process starts: this removes the single-use claim from the environment they inherit.
 const hostedServer = takeHostedServerEnvironment(process.env, app.isPackaged, process.platform);
 // Before the first provider check: a restored disk gives the provider CLIs a longer limit.
@@ -316,8 +322,28 @@ if (commandLineUserDataDirectory) {
   );
 }
 app.setName("OpenBot");
+// After `userData` has its final path and before the app is ready: renderers read `TZ` when they start.
+const systemTimezone =
+  serverMode || hostedServer || localServerChild
+    ? applyServerTimezone(join(app.getPath("userData"), SERVER_TIMEZONE_PREFERENCE_FILE), process.env)
+    : localTimezone;
 app.enableSandbox();
 if (process.platform === "win32") app.setAppUserModelId("app.openbot.desktop");
+// Windows #11233: a start from a Microsoft Store app kept the data in that app's folder. Start again
+// outside it, before the single-instance lock and before any file goes into `userData`. `process.exit`,
+// as for a second launch: the new process must be able to take the lock.
+if (
+  app.isPackaged &&
+  !(serverMode || hostedServer || localServerChildEnvironment) &&
+  (await Effect.runPromise(
+    restartOutsideWindowsPackage(
+      process.env,
+      process.argv,
+      (value) => parseDeepLink(value, inviteLinkOptions) !== null,
+    ),
+  ))
+)
+  process.exit(0);
 // Linux: on Wayland, Chromium waits until a monitor is on before it starts. With none, start again on
 // XWayland. Before the single-instance lock, so that the new process can take it. A parent process or
 // systemd watches the process, the output and the input of a headless server, so it does not restart.
@@ -553,6 +579,7 @@ const windowHolder = createMainWindowHolder();
 
 // Destructured so every `service.on("event", forwardX)` registration below reads as it always has.
 const {
+  closeChatNotifications,
   forwardAgentEvent,
   forwardWorkflowNotice,
   forwardBrowserDisplayState,
@@ -578,6 +605,7 @@ const {
   forwardDirectTyping,
   forwardAttachmentDownload,
   forwardAttachmentImportProgress,
+  forwardInstanceTransferUploadProgress,
 } = createRendererForwarders({
   getMainWindow: () => windowHolder.current,
   // A function: the window controller is made after the forwarders, and no event comes before it.
@@ -952,6 +980,7 @@ function registerIpcHandlers(
     }),
     ...dynamicIslandIpcHandlers({
       dynamicIsland,
+      chatRendererIds: () => new Set(windows.getChatWindows().map((window) => window.webContents.id)),
       setXWayland: (enabled) => setAboveAppsXWayland(app.getPath("userData"), "dynamic-island", enabled),
       keepXWayland: () => keepAboveAppsXWayland(app.getPath("userData"), "dynamic-island"),
     }),
@@ -1041,6 +1070,7 @@ function registerIpcHandlers(
       remoteServers,
       getMainWindow: getDialogParent,
       translate: language.translate,
+      reportUploadProgress: forwardInstanceTransferUploadProgress,
     }),
     ...updateIpcHandlers({ updater, updatePreferenceFile, requestedUpdate, idleRestart }),
     ...notificationIpcHandlers({
@@ -1167,6 +1197,7 @@ function registerIpcHandlers(
       }),
       openExternal: openLink,
       modelVisibility,
+      closeChatNotifications,
     }),
     ...browserIpcHandlers({ browserPictureInPicture, browser, remoteServers, browserView, localSignIn }),
   });
@@ -1534,7 +1565,8 @@ if (!hasSingleInstanceLock) {
         app.quit();
         return;
       }
-      if (!localServerChild) await presentApplication();
+      // A server has no desktop: invitation links open on the client, and a container has no xdg-settings (#10861).
+      if (!localServerChild && !serverMode && !hostedServer) await presentApplication();
       const recovery = await recoverFromStartLoop();
       if (recovery === "quit") {
         quitFor("quit");
@@ -1568,6 +1600,7 @@ if (!hasSingleInstanceLock) {
         hostingDeveloperKey,
         localServerChild,
         localServerControl,
+        systemTimezone,
         previousUncleanExit,
         macHapticFeedback,
         teardown,

@@ -8,6 +8,7 @@ import { TEAM_API_ROUTES } from "@openbot/contracts/team-api-routes";
 import { AGENT_PENDING_RUNTIME_CAPABILITY } from "@openbot/contracts/team-protocol/agent-pending-runtime-v1";
 import { AGENT_TASK_UI_BLOCKS_CAPABILITY } from "@openbot/contracts/team-protocol/agent-task-ui-blocks-v1";
 import { browserViewStreamSessionId } from "@openbot/contracts/team-protocol/browser-view-v1";
+import { TEAM_PROTOCOL_CAPABILITY_LIMITS } from "@openbot/contracts/team-protocol/capability-limits";
 import {
   BROWSER_SIGN_IN_CAPABILITY,
   BROWSER_VAULT_SKIP_CAPABILITY,
@@ -98,7 +99,6 @@ import {
 import {
   decodeTeamProtocolSupportV9,
   TEAM_LONG_CAPABILITY_LISTS_CAPABILITY,
-  TEAM_PROTOCOL_V9_CAPABILITY_LIMIT,
 } from "@openbot/contracts/team-protocol/v9";
 import { sourceText } from "@openbot/i18n/source";
 import { Context, Deferred, Effect, Exit, Fiber, Layer, ManagedRuntime } from "effect";
@@ -986,7 +986,11 @@ export class TeamWebRtcHostPeer {
       return yield* new RemoteWorkflowError({ cause: new Error("The event frame is not client control data.") });
     // Do not send `event-reset` here. The client can acknowledge an old event after the stream
     // already reset it, and a second reset would move it back before the newer events it has.
-    for (const sequence of this.#events.keys()) if (sequence <= frame.throughSequence) this.#events.delete(sequence);
+    // The buffer keeps the sequences in increasing order, so the scan stops at the first newer event.
+    for (const sequence of this.#events.keys()) {
+      if (sequence > frame.throughSequence) break;
+      this.#events.delete(sequence);
+    }
   });
 
   readonly #sendEvents = Effect.fn("TeamHostPeer.sendEvents")(function* (
@@ -1206,12 +1210,14 @@ function isHttpRequest(value: TeamProtocolV2Json): value is TeamProtocolV2Json &
     (value.capabilities === undefined ||
       (Array.isArray(value.capabilities) &&
         value.capabilities.length <=
-          (value.capabilities.includes(TEAM_LONG_CAPABILITY_LISTS_CAPABILITY)
-            ? TEAM_PROTOCOL_V9_CAPABILITY_LIMIT
-            : value.capabilities.includes(TEAM_PI_MUSE_CAPABILITY) ||
-                value.capabilities.includes(TEAM_OPEN_PROVIDERS_CAPABILITY)
-              ? 128
-              : 64) &&
+          TEAM_PROTOCOL_CAPABILITY_LIMITS[
+            value.capabilities.includes(TEAM_LONG_CAPABILITY_LISTS_CAPABILITY)
+              ? 9
+              : value.capabilities.includes(TEAM_PI_MUSE_CAPABILITY) ||
+                  value.capabilities.includes(TEAM_OPEN_PROVIDERS_CAPABILITY)
+                ? 7
+                : 1
+          ] &&
         value.capabilities.every(isString))) &&
     (value.bodyTransferId === undefined || isString(value.bodyTransferId)) &&
     (value.contentType === undefined || isString(value.contentType))
