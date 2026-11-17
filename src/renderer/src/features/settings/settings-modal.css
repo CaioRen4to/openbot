@@ -11,8 +11,15 @@
 
 .settings-dynamic-island-size > .ui-slider-field,
 .settings-dynamic-island-preview,
+.settings-dynamic-island-position-presets,
 .settings-agent-dock-size {
   padding: var(--openbot-space-3) var(--openbot-space-4);
+}
+
+.settings-dynamic-island-position-presets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: var(--openbot-space-2);
 }
 
 /* A server logo in the island server list, at the size of the billing server rows. */

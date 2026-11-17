@@ -39,6 +39,16 @@ import { XWaylandRestartRow } from "./XWaylandRestartRow";
 const PREVIEW_NOTCH_SIZE: DynamicIslandNotchSize = { width: 192, height: 32 };
 /** The space the preview keeps on each side of an island that it scales down to fit. */
 const PREVIEW_FIT_INSET = 12;
+const POSITION_PRESETS = [
+  { id: "topLeft", labelKey: "settings.notch.position.preset.topLeft", x: 0, y: 1 },
+  { id: "topCenter", labelKey: "settings.notch.position.preset.topCenter", x: 50, y: 0 },
+  { id: "topRight", labelKey: "settings.notch.position.preset.topRight", x: 100, y: 1 },
+  { id: "middleLeft", labelKey: "settings.notch.position.preset.middleLeft", x: 0, y: 50 },
+  { id: "middleRight", labelKey: "settings.notch.position.preset.middleRight", x: 100, y: 50 },
+  { id: "bottomLeft", labelKey: "settings.notch.position.preset.bottomLeft", x: 0, y: 90 },
+  { id: "bottomCenter", labelKey: "settings.notch.position.preset.bottomCenter", x: 50, y: 90 },
+  { id: "bottomRight", labelKey: "settings.notch.position.preset.bottomRight", x: 100, y: 90 },
+] as const;
 
 export interface SettingsDynamicIslandTabProps {
   value: GeneralSettingsValue;
@@ -76,6 +86,8 @@ export function SettingsDynamicIslandTab(props: SettingsDynamicIslandTabProps) {
   const screenSupport = () => (linux() && props.value.macBookNotch ? platform.appInfo()?.aboveAppsSupport : undefined);
   const widthPercent = () => props.value.macBookNotchWidthPercent;
   const heightPercent = () => props.value.macBookNotchHeightPercent;
+  const positionXPercent = () => props.value.macBookNotchPositionXPercent;
+  const positionYPercent = () => props.value.macBookNotchPositionYPercent;
   const widestBuiltInWidth = () =>
     openBotIdleCompactWidth("notch", builtInNotchSize(), DYNAMIC_ISLAND_SIZE_LIMITS.widthPercent.max);
   const widestExternalWidth = openBotIdleCompactWidth("island", undefined, DYNAMIC_ISLAND_SIZE_LIMITS.widthPercent.max);
@@ -84,6 +96,9 @@ export function SettingsDynamicIslandTab(props: SettingsDynamicIslandTabProps) {
   const isDefaultSize = () =>
     props.value.macBookNotchWidthPercent === DEFAULT_DYNAMIC_ISLAND_PREFERENCE.widthPercent &&
     props.value.macBookNotchHeightPercent === DEFAULT_DYNAMIC_ISLAND_PREFERENCE.heightPercent;
+  const isDefaultPosition = () =>
+    props.value.macBookNotchPositionXPercent === DEFAULT_DYNAMIC_ISLAND_PREFERENCE.positionXPercent &&
+    props.value.macBookNotchPositionYPercent === DEFAULT_DYNAMIC_ISLAND_PREFERENCE.positionYPercent;
 
   const serverShown = (serverId: string) =>
     isDynamicIslandServerVisible(
@@ -109,6 +124,13 @@ export function SettingsDynamicIslandTab(props: SettingsDynamicIslandTabProps) {
     props.onUpdateSettings({
       macBookNotchWidthPercent: DEFAULT_DYNAMIC_ISLAND_PREFERENCE.widthPercent,
       macBookNotchHeightPercent: DEFAULT_DYNAMIC_ISLAND_PREFERENCE.heightPercent,
+    });
+  }
+
+  function resetPosition(): void {
+    props.onUpdateSettings({
+      macBookNotchPositionXPercent: DEFAULT_DYNAMIC_ISLAND_PREFERENCE.positionXPercent,
+      macBookNotchPositionYPercent: DEFAULT_DYNAMIC_ISLAND_PREFERENCE.positionYPercent,
     });
   }
 
@@ -264,6 +286,66 @@ export function SettingsDynamicIslandTab(props: SettingsDynamicIslandTabProps) {
             disabled={!props.value.macBookNotch}
             formatValue={(value) => `${value}%`}
             onChange={(value) => props.onUpdateSetting("macBookNotchHeightPercent", value)}
+          />
+        </ItemGroup>
+      </SettingsSection>
+
+      <SettingsSection
+        data-settings-row="settings.notch.position.title"
+        title={i18n.t("settings.notch.position.title")}
+        description={i18n.t("settings.notch.position.description")}
+        actions={
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={!props.value.macBookNotch || isDefaultPosition()}
+            onClick={resetPosition}
+          >
+            {i18n.t("settings.notch.position.reset")}
+          </Button>
+        }
+      >
+        <ItemGroup class="settings-modal-card settings-dynamic-island-size">
+          <div class="settings-dynamic-island-position-presets">
+            <For each={POSITION_PRESETS}>
+              {(preset) => (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={positionXPercent() === preset.x && positionYPercent() === preset.y ? "secondary" : "outline"}
+                  disabled={!props.value.macBookNotch}
+                  onClick={() =>
+                    props.onUpdateSettings({
+                      macBookNotchPositionXPercent: preset.x,
+                      macBookNotchPositionYPercent: preset.y,
+                    })
+                  }
+                >
+                  {i18n.t(preset.labelKey)}
+                </Button>
+              )}
+            </For>
+          </div>
+          <SliderField
+            label={i18n.t("settings.notch.position.horizontal")}
+            value={positionXPercent()}
+            minValue={DYNAMIC_ISLAND_SIZE_LIMITS.positionXPercent.min}
+            maxValue={DYNAMIC_ISLAND_SIZE_LIMITS.positionXPercent.max}
+            step={DYNAMIC_ISLAND_SIZE_LIMITS.positionXPercent.step}
+            disabled={!props.value.macBookNotch}
+            formatValue={(value) => `${value}%`}
+            onChange={(value) => props.onUpdateSetting("macBookNotchPositionXPercent", value)}
+          />
+          <SliderField
+            label={i18n.t("settings.notch.position.vertical")}
+            value={positionYPercent()}
+            minValue={DYNAMIC_ISLAND_SIZE_LIMITS.positionYPercent.min}
+            maxValue={DYNAMIC_ISLAND_SIZE_LIMITS.positionYPercent.max}
+            step={DYNAMIC_ISLAND_SIZE_LIMITS.positionYPercent.step}
+            disabled={!props.value.macBookNotch}
+            formatValue={(value) => `${value}%`}
+            onChange={(value) => props.onUpdateSetting("macBookNotchPositionYPercent", value)}
           />
         </ItemGroup>
       </SettingsSection>

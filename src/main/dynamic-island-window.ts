@@ -25,6 +25,7 @@ import { sendToRenderer } from "./renderer-ipc";
 const logger = createOpenBotLogger("dynamic-island-window");
 
 const DYNAMIC_ISLAND_WINDOW_SIZE = { width: 614, height: 380 } as const;
+const DYNAMIC_ISLAND_WORK_AREA_MARGIN = { horizontal: 20, vertical: 16 } as const;
 const DYNAMIC_ISLAND_COMPACT_WINDOW_HEIGHT = 50;
 // Room below the compact island for its hover growth and hit band, which the window must not clip.
 const DYNAMIC_ISLAND_COMPACT_WINDOW_HOVER_ROOM = 18;
@@ -275,7 +276,11 @@ export class DynamicIslandWindowController {
 
   /** On X11 the island stays below the top panel of the desktop, as the clock and the tray do. */
   #islandBounds(display: Pick<Display, "bounds" | "workArea">): Rectangle {
-    return dynamicIslandWindowBounds(display, this.#options.windowKind === "panel" ? "screen" : "work-area");
+    return dynamicIslandWindowBounds(
+      display,
+      this.#options.windowKind === "panel" ? "screen" : "work-area",
+      this.#preference,
+    );
   }
 
   #windowBounds(display: Pick<Display, "bounds" | "internal">, bounds: Rectangle, interactive: boolean): Rectangle {
@@ -589,17 +594,37 @@ function criticalActionKey(action: CriticalAction): string {
 }
 
 /**
- * On macOS the island sits in the menu bar, at the top of the display. On Windows it starts below a
- * taskbar at the top of the display, because the taskbar is also a topmost window. On X11 it stays below
- * the top panel of the desktop, as the clock and the tray do.
+ * Places the Dynamic Island window on the display according to the user's horizontal and vertical
+ * position percentages while keeping safe screen margins and work-area boundaries.
  */
 function dynamicIslandWindowBounds(
   display: Pick<Display, "bounds" | "workArea">,
   top: "screen" | "work-area",
+  position: Pick<DynamicIslandPreference, "positionXPercent" | "positionYPercent"> = DEFAULT_DYNAMIC_ISLAND_PREFERENCE,
 ): Rectangle {
+  const area = top === "work-area" ? display.workArea : display.bounds;
+  const minX = area.x + DYNAMIC_ISLAND_WORK_AREA_MARGIN.horizontal;
+  const maxX = Math.max(
+    minX,
+    area.x + area.width - DYNAMIC_ISLAND_WINDOW_SIZE.width - DYNAMIC_ISLAND_WORK_AREA_MARGIN.horizontal,
+  );
+  const x = Math.round(minX + ((maxX - minX) * position.positionXPercent) / 100);
+
+  let y: number;
+  if (position.positionYPercent <= 0) {
+    y = Math.round(area.y);
+  } else {
+    const minY = area.y + DYNAMIC_ISLAND_WORK_AREA_MARGIN.vertical;
+    const maxY = Math.max(
+      minY,
+      area.y + area.height - DYNAMIC_ISLAND_COMPACT_WINDOW_HEIGHT - DYNAMIC_ISLAND_WORK_AREA_MARGIN.vertical,
+    );
+    y = Math.round(minY + ((maxY - minY) * (position.positionYPercent - 1)) / 99);
+  }
+
   return {
-    x: Math.round(display.bounds.x + (display.bounds.width - DYNAMIC_ISLAND_WINDOW_SIZE.width) / 2),
-    y: top === "work-area" ? display.workArea.y : display.bounds.y,
+    x,
+    y,
     ...DYNAMIC_ISLAND_WINDOW_SIZE,
   };
 }

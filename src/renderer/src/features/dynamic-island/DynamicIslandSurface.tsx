@@ -65,6 +65,8 @@ export function DynamicIslandSurface() {
   // and the browser then reports an observer loop error. No timer runs.
   const shapeObserver = SHAPED_WINDOW ? new MutationObserver(() => followShape()) : undefined;
   const visible = () => presentation().mode !== "idle" || preference().idleVisible;
+  const effectiveDisplayMode = () =>
+    preference().positionYPercent > 0 || preference().positionXPercent !== 50 ? "island" : displayMode;
 
   /** Linux: tells main the parts of the window that take the pointer. Only a change is sent. */
   function syncShape(): Element[] {
@@ -299,9 +301,9 @@ export function DynamicIslandSurface() {
           <OpenBotDynamicIsland
             presentation={presentation()}
             state={viewState()}
-            displayMode={displayMode}
+            displayMode={effectiveDisplayMode()}
             variant={variant}
-            notchSize={displayMode === "notch" ? notchSize() : undefined}
+            notchSize={effectiveDisplayMode() === "notch" ? notchSize() : undefined}
             widthPercent={preference().widthPercent}
             heightPercent={preference().heightPercent}
             extendedHoverArea

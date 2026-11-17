@@ -34,6 +34,8 @@ const PREFERENCE: DynamicIslandPreference = {
   additionalDisplaysEnabled: false,
   widthPercent: 100,
   heightPercent: 100,
+  positionXPercent: 50,
+  positionYPercent: 0,
   serverVisibility: {},
   newServersVisible: true,
 };

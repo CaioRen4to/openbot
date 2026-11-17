@@ -12,6 +12,10 @@ export interface DynamicIslandPreference {
   widthPercent: number;
   /** The compact island height, as a percent of its default height. It never gets lower than a notch. */
   heightPercent: number;
+  /** Horizontal screen position, from 0 (left) to 100 (right), where 50 is centered. */
+  positionXPercent: number;
+  /** Vertical screen position, from 0 (top edge) to 100 (bottom edge). */
+  positionYPercent: number;
   /**
    * The user's choice for each server, by server id: false hides the server's items from the island.
    * A server with no choice uses `newServersVisible`. The choice is local to this computer.
@@ -28,6 +32,8 @@ export const DYNAMIC_ISLAND_SERVER_CHOICES_LIMIT = 256;
 export const DYNAMIC_ISLAND_SIZE_LIMITS = {
   widthPercent: { min: 20, max: 130, step: 5 },
   heightPercent: { min: 75, max: 125, step: 5 },
+  positionXPercent: { min: 0, max: 100, step: 1 },
+  positionYPercent: { min: 0, max: 100, step: 1 },
 } as const;
 
 /**
@@ -58,6 +64,8 @@ export const DEFAULT_DYNAMIC_ISLAND_PREFERENCE = {
   additionalDisplaysEnabled: true,
   widthPercent: 100,
   heightPercent: 100,
+  positionXPercent: 50,
+  positionYPercent: 0,
   serverVisibility: {},
   newServersVisible: true,
 } as const satisfies DynamicIslandPreference;
@@ -213,6 +221,8 @@ export function isDynamicIslandPreference(value: unknown): value is DynamicIslan
     isBoolean(value.additionalDisplaysEnabled) &&
     isDynamicIslandSizePercent(value.widthPercent, DYNAMIC_ISLAND_SIZE_LIMITS.widthPercent) &&
     isDynamicIslandSizePercent(value.heightPercent, DYNAMIC_ISLAND_SIZE_LIMITS.heightPercent) &&
+    isDynamicIslandSizePercent(value.positionXPercent, DYNAMIC_ISLAND_SIZE_LIMITS.positionXPercent) &&
+    isDynamicIslandSizePercent(value.positionYPercent, DYNAMIC_ISLAND_SIZE_LIMITS.positionYPercent) &&
     isDynamicIslandServerVisibility(value.serverVisibility) &&
     isBoolean(value.newServersVisible)
   );

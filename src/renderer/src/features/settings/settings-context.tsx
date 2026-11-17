@@ -43,6 +43,8 @@ function islandSettings(preference: DynamicIslandPreference) {
     macBookNotchAdditionalDisplays: preference.additionalDisplaysEnabled,
     macBookNotchWidthPercent: preference.widthPercent,
     macBookNotchHeightPercent: preference.heightPercent,
+    macBookNotchPositionXPercent: preference.positionXPercent,
+    macBookNotchPositionYPercent: preference.positionYPercent,
     macBookNotchServers: preference.serverVisibility,
     macBookNotchNewServers: preference.newServersVisible,
   } satisfies Partial<GeneralSettingsValue>;
@@ -442,6 +444,8 @@ const Settings = createSimpleContext({
         previous.macBookNotchAdditionalDisplays !== value.macBookNotchAdditionalDisplays ||
         previous.macBookNotchWidthPercent !== value.macBookNotchWidthPercent ||
         previous.macBookNotchHeightPercent !== value.macBookNotchHeightPercent ||
+        previous.macBookNotchPositionXPercent !== value.macBookNotchPositionXPercent ||
+        previous.macBookNotchPositionYPercent !== value.macBookNotchPositionYPercent ||
         previous.macBookNotchServers !== value.macBookNotchServers ||
         previous.macBookNotchNewServers !== value.macBookNotchNewServers
       ) {
@@ -456,6 +460,8 @@ const Settings = createSimpleContext({
             additionalDisplaysEnabled: value.macBookNotchAdditionalDisplays,
             widthPercent: value.macBookNotchWidthPercent,
             heightPercent: value.macBookNotchHeightPercent,
+            positionXPercent: value.macBookNotchPositionXPercent,
+            positionYPercent: value.macBookNotchPositionYPercent,
             serverVisibility: value.macBookNotchServers,
             newServersVisible: value.macBookNotchNewServers,
           })
@@ -477,6 +483,8 @@ const Settings = createSimpleContext({
               macBookNotchAdditionalDisplays: previous.macBookNotchAdditionalDisplays,
               macBookNotchWidthPercent: previous.macBookNotchWidthPercent,
               macBookNotchHeightPercent: previous.macBookNotchHeightPercent,
+              macBookNotchPositionXPercent: previous.macBookNotchPositionXPercent,
+              macBookNotchPositionYPercent: previous.macBookNotchPositionYPercent,
               macBookNotchServers: previous.macBookNotchServers,
               macBookNotchNewServers: previous.macBookNotchNewServers,
             }));

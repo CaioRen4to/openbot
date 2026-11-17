@@ -46,6 +46,18 @@ export const readDynamicIslandPreference = Effect.fn("readDynamicIslandPreferenc
         heightPercent: isDynamicIslandSizePercent(parsed.heightPercent, DYNAMIC_ISLAND_SIZE_LIMITS.heightPercent)
           ? parsed.heightPercent
           : defaults.heightPercent,
+        positionXPercent: isDynamicIslandSizePercent(
+          parsed.positionXPercent,
+          DYNAMIC_ISLAND_SIZE_LIMITS.positionXPercent,
+        )
+          ? parsed.positionXPercent
+          : defaults.positionXPercent,
+        positionYPercent: isDynamicIslandSizePercent(
+          parsed.positionYPercent,
+          DYNAMIC_ISLAND_SIZE_LIMITS.positionYPercent,
+        )
+          ? parsed.positionYPercent
+          : defaults.positionYPercent,
         // The server choices are optional for the same reason. A bad value resets only the choices,
         // which shows every server again, as the island did before the choices existed.
         ...(isDynamicIslandServerVisibility(parsed.serverVisibility) && isBoolean(parsed.newServersVisible)
