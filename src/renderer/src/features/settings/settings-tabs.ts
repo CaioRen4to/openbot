@@ -247,7 +247,10 @@ export const navItems: ReadonlyArray<SettingsNavItem> = [
     descriptionKey: "settings.tab.computerUse.description",
     icon: MousePointer2,
     group: "settings.sections.group.thisComputer",
-    rows: [{ titleKey: "computerUse.permissions.title", descriptionKey: "computerUse.permissions.description" }],
+    rows: [
+      { titleKey: "computerUse.permissions.title", descriptionKey: "computerUse.permissions.description" },
+      { titleKey: "computerUse.agents.title", descriptionKey: "computerUse.agents.description" },
+    ],
   },
   {
     value: "updates",

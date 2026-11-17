@@ -1049,7 +1049,7 @@ function AppSettings(props: AccountProps) {
   const updates = useUpdates();
   const whatsNew = useWhatsNew();
   const { servers, activeServer, setAddServerOpen, setServerMuted, setServerNotificationLevel } = useServers();
-  const { agentStatus, agentList, userHiddenAgentIds } = useAgents();
+  const { agentStatus, agentList, userHiddenAgentIds, updateAgent } = useAgents();
   const { sidebarLayout, pinnedSidebarItems } = useSidebar();
   const { openServerSettings } = useServerSettings();
   /** The agent dock tab lists the agents of the active server in sidebar order, without hidden agents. */
@@ -1148,6 +1148,17 @@ function AppSettings(props: AccountProps) {
         restoreFocusTarget={appSettingsRestoreTarget()}
         openTab={appSettingsTab()}
         hostedServerDeleteRequest={hostedServerDeleteRequest()}
+        computerUseAgents={activeServer()?.kind === "local" ? agentList() : []}
+        onSetAgentComputerUse={async (agentId, enabled) => {
+          await updateAgent(agentId, { computerUse: enabled });
+        }}
+        onEnableAllComputerUse={async () => {
+          for (const agent of agentList()) {
+            if (agent.computerUse === false) {
+              await updateAgent(agent.id, { computerUse: true });
+            }
+          }
+        }}
       />
     </Loading>
   );

@@ -1,4 +1,4 @@
-import type { ComputerUseState, MacPermissionId } from "@openbot/contracts/ipc";
+import { agentComputerUseEnabled, type ComputerUseState, type MacPermissionId } from "@openbot/contracts/ipc";
 import type { AppTextKey } from "@openbot/i18n";
 import {
   Alert,
@@ -23,12 +23,19 @@ import {
   RefreshCw,
   SettingsSection,
   Skeleton,
+  Switch,
   TriangleAlert,
 } from "@openbot/ui";
 import { useText } from "@openbot/ui/text";
 import { createSignal, For, onCleanup, onSettled, Show } from "solid-js";
 import { desktopAnalytics } from "../../analytics";
 import { computerUsePort } from "./computer-use-port";
+
+export interface ComputerUseAgentEntry {
+  id: string;
+  name: string;
+  computerUse?: boolean | undefined;
+}
 
 export interface ComputerUseSetupProps {
   /**
@@ -38,6 +45,9 @@ export interface ComputerUseSetupProps {
    * answer - the list of permissions, and the status - never a table this component keeps.
    */
   variant: "settings" | "compact";
+  agents?: readonly ComputerUseAgentEntry[] | undefined;
+  onSetAgentComputerUse?: ((agentId: string, enabled: boolean) => Promise<void>) | undefined;
+  onEnableAllComputerUse?: (() => Promise<void>) | undefined;
 }
 
 /**
@@ -66,10 +76,41 @@ export function ComputerUseSetup(props: ComputerUseSetupProps) {
   const [state, setState] = createSignal<ComputerUseState | null>(null);
   const [loading, setLoading] = createSignal(false);
   const [busyPermission, setBusyPermission] = createSignal<MacPermissionId | null>(null);
+  const [busyAgentId, setBusyAgentId] = createSignal<string | null>(null);
+  const [bulkBusy, setBulkBusy] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
   let disposed = false;
 
   const permissions = () => state()?.permissions ?? [];
+  const agents = () => props.agents ?? [];
+  const enabledAgentCount = () => agents().filter((agent) => agentComputerUseEnabled(agent)).length;
+  const allAgentsEnabled = () => agents().length > 0 && enabledAgentCount() === agents().length;
+
+  async function toggleAgentComputerUse(agentId: string, enabled: boolean): Promise<void> {
+    if (!props.onSetAgentComputerUse || busyAgentId() || bulkBusy()) return;
+    setBusyAgentId(agentId);
+    setError(null);
+    try {
+      await props.onSetAgentComputerUse(agentId, enabled);
+    } catch (cause) {
+      if (!disposed) setError(errorMessage(cause, t("computerUse.error.check")));
+    } finally {
+      if (!disposed) setBusyAgentId(null);
+    }
+  }
+
+  async function enableAllAgentsComputerUse(): Promise<void> {
+    if (!props.onEnableAllComputerUse || bulkBusy() || busyAgentId()) return;
+    setBulkBusy(true);
+    setError(null);
+    try {
+      await props.onEnableAllComputerUse();
+    } catch (cause) {
+      if (!disposed) setError(errorMessage(cause, t("computerUse.error.check")));
+    } finally {
+      if (!disposed) setBulkBusy(false);
+    }
+  }
 
   async function loadState(): Promise<void> {
     if (loading()) return;
@@ -230,6 +271,62 @@ export function ComputerUseSetup(props: ComputerUseSetupProps) {
             <AlertDescription>{error()}</AlertDescription>
           </AlertContent>
         </Alert>
+      </Show>
+
+      <Show when={props.variant === "settings" && agents().length > 0}>
+        <SettingsSection
+          data-settings-row="computerUse.agents.title"
+          title={t("computerUse.agents.title")}
+          description={t("computerUse.agents.description")}
+        >
+          <ItemGroup class="settings-modal-card">
+            <Item class="settings-modal-row">
+              <ItemContent>
+                <ItemTitle>
+                  {t("computerUse.agents.summary", { enabled: enabledAgentCount(), count: agents().length })}
+                </ItemTitle>
+              </ItemContent>
+              <Show when={props.onEnableAllComputerUse}>
+                <ItemActions>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    loading={bulkBusy()}
+                    disabled={allAgentsEnabled() || busyAgentId() !== null}
+                    onClick={() => void enableAllAgentsComputerUse()}
+                  >
+                    {allAgentsEnabled() ? t("computerUse.agents.allEnabled") : t("computerUse.agents.enableAll")}
+                  </Button>
+                </ItemActions>
+              </Show>
+            </Item>
+            <For each={agents()}>
+              {(agent) => {
+                const enabled = () => agentComputerUseEnabled(agent);
+                return (
+                  <Item class="settings-modal-row">
+                    <ItemContent>
+                      <ItemTitle>{agent.name}</ItemTitle>
+                    </ItemContent>
+                    <ItemActions>
+                      <Badge variant={enabled() ? "success-light" : "outline"}>
+                        {t(enabled() ? "computerUse.agents.enabledBadge" : "computerUse.agents.disabledBadge")}
+                      </Badge>
+                      <Switch
+                        size="sm"
+                        checked={enabled()}
+                        disabled={busyAgentId() === agent.id || bulkBusy() || !props.onSetAgentComputerUse}
+                        aria-label={t("computerUse.agents.toggleLabel", { name: agent.name })}
+                        onChange={(next) => void toggleAgentComputerUse(agent.id, next)}
+                      />
+                    </ItemActions>
+                  </Item>
+                );
+              }}
+            </For>
+          </ItemGroup>
+        </SettingsSection>
       </Show>
     </>
   );

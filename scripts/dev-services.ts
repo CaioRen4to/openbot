@@ -310,13 +310,35 @@ function prepareVoiceRuntime(): void {
   }
 }
 
+/**
+ * Downloads and verifies the pinned Computer Use driver (`build/cua-driver`) when absent or
+ * outdated, so local agents always receive Computer Use tools in development.
+ */
+function prepareCuaDriverRuntime(): void {
+  try {
+    execFileSync(process.execPath, ["run", "prepare:cua-driver"], {
+      cwd: projectRoot,
+      stdio: "inherit",
+      timeout: 300_000,
+    });
+  } catch (error) {
+    logger.warn(
+      "Could not prepare the Computer Use driver. Computer Use stays off until `bun run prepare:cua-driver` completes.",
+      toLogValue(error),
+    );
+  }
+}
+
 async function main(): Promise<void> {
   const { target, dryRun, force, shared, hostingTest, slack } = parseDevelopmentTarget(process.argv.slice(2));
   if (!dryRun && prepareDevelopmentEnvironment() === "created") {
     logger.info("Prepared local development state.");
   }
   const services = servicesForTarget(target);
-  if (!dryRun && services.includes("app")) prepareVoiceRuntime();
+  if (!dryRun && services.includes("app")) {
+    prepareVoiceRuntime();
+    prepareCuaDriverRuntime();
+  }
   const developmentEnvironment = dryRun ? {} : await loadDevelopmentEnvironment(projectRoot);
   const sharedEnvironment = developmentEnvironmentForTarget(target);
   if (hostingTest) {

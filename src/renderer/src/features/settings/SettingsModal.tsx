@@ -46,7 +46,7 @@ import { createSettingsProfileStore } from "@openbot/ui/features/settings/stores
 import { createSettingsUpdatesStore } from "@openbot/ui/features/settings/stores/updates-store";
 import { createEffect, createSignal, Show, untrack } from "solid-js";
 import { useI18n } from "../../i18n-context";
-import { ComputerUseSetup } from "../computer-use/ComputerUseSetup";
+import { type ComputerUseAgentEntry, ComputerUseSetup } from "../computer-use/ComputerUseSetup";
 import type { CodexLiveAccess } from "../speech/codex-live-access";
 import { licenseContactUs, trackLicenseEvent } from "./license-analytics";
 import { createNotificationLevelsStore } from "./notification-levels-store";
@@ -132,6 +132,10 @@ export interface SettingsModalProps {
   openTab?: SettingsTab | undefined;
   /** Where the settings page shows, or nothing while the page is not on screen. */
   page: SettingsPagePlacement | undefined;
+  /** Local agents listed on the Computer Use tab so per-agent permissions can be toggled in one place. */
+  computerUseAgents?: readonly ComputerUseAgentEntry[] | undefined;
+  onSetAgentComputerUse?: ((agentId: string, enabled: boolean) => Promise<void>) | undefined;
+  onEnableAllComputerUse?: (() => Promise<void>) | undefined;
 }
 
 /**
@@ -396,7 +400,12 @@ export function SettingsModal(props: SettingsModalProps) {
         </Show>
 
         <Tabs.Content value="computer-use" class="settings-modal-tab-panel" data-tab="computer-use">
-          <ComputerUseSetup variant="settings" />
+          <ComputerUseSetup
+            variant="settings"
+            agents={props.computerUseAgents}
+            onSetAgentComputerUse={props.onSetAgentComputerUse}
+            onEnableAllComputerUse={props.onEnableAllComputerUse}
+          />
         </Tabs.Content>
 
         <Tabs.Content value="profile" class="settings-modal-tab-panel profile-panel" data-tab="profile">

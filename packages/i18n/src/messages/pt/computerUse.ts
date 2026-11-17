@@ -39,4 +39,15 @@ export const messages = {
   "computerUse.help.revealFailed": "Não foi possível mostrar o aplicativo no Finder.",
   "computerUse.help.dragFailed": "Não foi possível arrastar o aplicativo.",
   "computerUse.highlight.working": "O OpenBot está trabalhando em {title}",
+  "computerUse.agents.title": "Acesso dos agentes",
+  "computerUse.agents.description": "Escolha quais agentes locais podem controlar aplicativos com o Uso do computador.",
+  "computerUse.agents.enableAll": "Liberar para todos os agentes",
+  "computerUse.agents.allEnabled": "Todos liberados",
+  "computerUse.agents.summary": {
+    one: "{enabled} de {count} agente liberado",
+    other: "{enabled} de {count} agentes liberados",
+  },
+  "computerUse.agents.toggleLabel": "Uso do computador para {name}",
+  "computerUse.agents.enabledBadge": "Liberado",
+  "computerUse.agents.disabledBadge": "Bloqueado",
 } as const satisfies PartialTranslation<typeof source>;

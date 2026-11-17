@@ -39,4 +39,15 @@ export const messages = defineMessages("computerUse", {
   "computerUse.help.revealFailed": "The application could not be shown in Finder.",
   "computerUse.help.dragFailed": "The application could not be dragged.",
   "computerUse.highlight.working": "OpenBot is working in {title}",
+  "computerUse.agents.title": "Agent access",
+  "computerUse.agents.description": "Choose which local agents can control apps with Computer Use on this computer.",
+  "computerUse.agents.enableAll": "Enable for all agents",
+  "computerUse.agents.allEnabled": "All agents enabled",
+  "computerUse.agents.summary": {
+    one: "{enabled} of {count} agent enabled",
+    other: "{enabled} of {count} agents enabled",
+  },
+  "computerUse.agents.toggleLabel": "Computer Use for {name}",
+  "computerUse.agents.enabledBadge": "Enabled",
+  "computerUse.agents.disabledBadge": "Blocked",
 });
